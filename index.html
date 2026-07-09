@@ -131,6 +131,32 @@
 
   select.select-input{background:var(--surface-alt); color:var(--text); padding:10px 12px; border-radius:8px; font-size:14px; width:100%; margin-bottom:8px;}
   textarea.note-input{background:var(--surface); border-radius:10px; padding:10px 12px; width:100%; font-size:13px; min-height:60px;}
+
+  /* Muscle chips */
+  .muscle-chip{display:inline-block; font-size:10px; font-weight:700; padding:3px 8px; border-radius:6px;
+    background:var(--surface-alt); color:var(--steel); margin-right:5px; margin-top:2px; text-transform:uppercase; letter-spacing:.03em;}
+  .muscle-chip.active{background:rgba(255,90,31,.15); color:var(--accent);}
+
+  /* Workout set-table card */
+  .ex-log-card{background:var(--surface); border-radius:14px; padding:14px; margin-bottom:14px;}
+  .notes-inline{width:100%; background:transparent; border:none; border-bottom:1px solid var(--border); color:var(--muted);
+    font-size:13px; padding:8px 0; margin:8px 0;}
+  .notes-inline:focus{color:var(--text); border-color:var(--steel);}
+  .rest-toggle{display:flex; align-items:center; gap:5px; background:none; border:none; color:var(--steel);
+    font-size:12px; font-weight:700; padding:4px 0 10px; cursor:pointer;}
+  .set-table-header{display:grid; grid-template-columns:24px 1fr 52px 52px 44px 32px; gap:6px; align-items:center;
+    font-size:9px; font-weight:800; letter-spacing:.06em; color:var(--muted); padding:0 2px 6px;}
+  .set-row{display:grid; grid-template-columns:24px 1fr 52px 52px 44px 32px; gap:6px; align-items:center;
+    padding:6px 2px; border-radius:8px;}
+  .set-row.done{background:rgba(62,207,142,.08);}
+  .set-num{font-weight:800; font-size:13px; color:var(--text); text-align:center;}
+  .set-prev{font-size:10px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .set-input{background:var(--surface-alt); border-radius:7px; padding:7px 4px; text-align:center; font-size:13px; font-weight:700; color:var(--text); width:100%;}
+  .rpe-btn{background:var(--surface-alt); border:none; border-radius:7px; padding:7px 2px; font-size:11px; font-weight:700; color:var(--muted); cursor:pointer;}
+  .set-check{width:26px; height:26px; border-radius:7px; border:2px solid #4a4a54; background:none; display:flex; align-items:center; justify-content:center; margin:0 auto; color:#151515; cursor:pointer;}
+  .set-check.done{background:var(--mint); border-color:var(--mint);}
+  .add-set-btn{display:flex; align-items:center; justify-content:center; gap:6px; width:100%; margin-top:8px; padding:10px;
+    background:var(--surface-alt); border:none; border-radius:10px; color:var(--text); font-weight:700; font-size:13px; cursor:pointer;}
 </style>
 </head>
 <body>

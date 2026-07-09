@@ -161,6 +161,7 @@ const state = {
   bodylog: LS.get("hx_bodylog",[]),
   customExercises: LS.get("hx_custom_exercises",[]),
   workoutLog: LS.get("hx_workout_log",[]),
+  foodLog: LS.get("hx_food_log",[]),
   restDuration: LS.get("hx_rest_duration",90),
   session: LS.get("hx_active_session", null),
   libCategory: "All",
@@ -179,6 +180,7 @@ function persist(){
   LS.set("hx_bodylog", state.bodylog);
   LS.set("hx_custom_exercises", state.customExercises);
   LS.set("hx_workout_log", state.workoutLog);
+  LS.set("hx_food_log", state.foodLog);
   LS.set("hx_rest_duration", state.restDuration);
   LS.set("hx_active_session", state.session);
 }
@@ -267,8 +269,28 @@ function renderPlanTab(){
 }
 
 /* =========================================================
-   WORKOUT TAB — freestyle logger with rest timer
+   WORKOUT TAB — freestyle logger, set-table style
 ========================================================= */
+const REST_OPTIONS = [0,60,90,120,180];
+const RPE_OPTIONS = ["–","6","6.5","7","7.5","8","8.5","9","9.5","10"];
+
+function getPreviousSet(exerciseName, setIndex){
+  for(const sess of state.workoutLog){
+    const ex = sess.exercises.find(e=>e.name===exerciseName);
+    if(ex && ex.sets.length){
+      const set = ex.sets[setIndex] || ex.sets[ex.sets.length-1];
+      if(set && (set.weight||set.reps)) return set;
+    }
+  }
+  return null;
+}
+
+function sessionMuscles(exercises){
+  const set = new Set();
+  exercises.forEach(ex=> set.add(getMuscle(ex.name)));
+  return Array.from(set);
+}
+
 function renderWorkoutTab(){
   if(!state.session){
     const recent = state.workoutLog.slice(0,5);
@@ -277,23 +299,29 @@ function renderWorkoutTab(){
       <button class="btn btn-accent btn-block" data-action="start-session">${svg('plus',16)} New Workout</button>
       <div class="eyebrow-label">Recent Sessions</div>
       ${recent.length===0?`<div class="empty-note">No sessions logged yet.</div>`:
-        recent.map(s=>`<div class="history-row">
-          <div><div style="font-weight:700;font-size:13px;">${s.exercises.length} exercise${s.exercises.length!==1?'s':''}</div>
-          <div class="mono" style="font-size:11px;color:var(--muted);">${s.date}</div></div>
+        recent.map(s=>{
+          const muscles = sessionMuscles(s.exercises);
+          return `<div class="history-row" style="align-items:flex-start;">
+          <div>
+            <div style="font-weight:700;font-size:13px;">${s.exercises.length} exercise${s.exercises.length!==1?'s':''}${s.durationMin?` · ${s.durationMin} min`:''}</div>
+            <div class="mono" style="font-size:11px;color:var(--muted);margin-top:2px;">${s.date}${s.volume?` · ${Math.round(s.volume)}kg vol`:''}</div>
+            <div style="margin-top:5px;">${muscles.map(m=>`<span class="muscle-chip">${m}</span>`).join("")}</div>
+          </div>
           <button class="del" data-del-session="${s.id}">${svg('x',14)}</button>
-        </div>`).join("")}
+        </div>`;}).join("")}
     `;
   }
   const s = state.session;
+  const muscles = sessionMuscles(s.exercises);
   return `
-    <div class="eyebrow-label" style="margin-top:4px;">In Progress</div>
-    <div class="field" style="align-items:flex-start;">
+    <div class="row-between" style="margin-bottom:4px;">
       <div>
-        <label>Started</label>
-        <div class="mono" style="font-size:12px;color:var(--muted);margin-top:2px;">${new Date(s.startedAt).toLocaleTimeString()}</div>
+        <div class="eyebrow-label" style="margin:0 0 2px;">In Progress</div>
+        <div class="mono" style="font-size:12px;color:var(--muted);">Started ${new Date(s.startedAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</div>
       </div>
-      <button class="btn btn-accent" style="padding:8px 14px;" data-action="finish-session">Finish</button>
+      <button class="btn btn-accent" style="padding:10px 18px;" data-action="finish-session">Finish</button>
     </div>
+    ${muscles.length? `<div style="margin:10px 0 4px;">${muscles.map(m=>`<span class="muscle-chip active">${m}</span>`).join("")}</div>`:""}
 
     <div class="eyebrow-label">Add Exercise</div>
     <select class="select-input" id="ex-picker">
@@ -306,29 +334,39 @@ function renderWorkoutTab(){
     <button class="btn btn-ghost btn-block" data-action="add-exercise" style="margin-bottom:16px;">Add to Session</button>
 
     ${s.exercises.length===0?`<div class="empty-note">No exercises added yet.</div>`:
-      s.exercises.map((ex,exi)=>`
-      <div class="info-box" style="margin-bottom:12px;padding:12px;">
-        <div class="row-between" style="margin-bottom:8px;">
-          <span style="font-weight:800;color:var(--text);font-size:14px;">${ex.name}</span>
-          <button class="del" data-del-exercise="${exi}">${svg('x',14)}</button>
-        </div>
-        ${ex.sets.map((set,si)=>`<div class="history-row" style="margin-bottom:4px;">
-          <span class="mono" style="font-size:12px;color:var(--muted);">SET ${si+1}</span>
-          <span class="mono" style="font-size:13px;color:var(--accent);">${set.weight?set.weight+'kg × ':''}${set.reps}</span>
-          <button class="del" data-del-set="${exi}|${si}">${svg('x',12)}</button>
-        </div>`).join("")}
-        <div style="display:flex;gap:6px;margin-top:8px;">
-          <input type="number" placeholder="kg" class="mono" id="w-${exi}" style="background:var(--surface-alt);border-radius:8px;padding:8px;width:60px;text-align:center;">
-          <input type="text" placeholder="reps / time / dist" class="mono" id="r-${exi}" style="background:var(--surface-alt);border-radius:8px;padding:8px;flex:1;text-align:center;">
-          <button class="btn btn-steel" data-log-set="${exi}" style="padding:8px 12px;">Log</button>
-        </div>
-      </div>
-    `).join("")}
+      s.exercises.map((ex,exi)=>{
+        const muscle = getMuscle(ex.name);
+        const restLabel = ex.restDuration ? `${ex.restDuration}s` : "OFF";
+        return `
+        <div class="ex-log-card">
+          <div class="row-between" style="margin-bottom:4px;">
+            <div>
+              <div style="font-weight:800;color:var(--steel);font-size:15px;">${ex.name}</div>
+              <span class="muscle-chip">${muscle}</span>
+            </div>
+            <button class="del" data-del-exercise="${exi}">${svg('x',15)}</button>
+          </div>
+          <input type="text" class="notes-inline" placeholder="Add notes here…" value="${ex.notes||''}" data-notes-exercise="${exi}">
+          <button class="rest-toggle" data-rest-toggle="${exi}">${svg('workout',13)} Rest Timer: ${restLabel}</button>
 
-    <div class="eyebrow-label">Rest Timer</div>
-    <div style="display:flex;gap:8px;">
-      ${[60,90,120,180].map(sec=>`<button class="btn btn-ghost" data-rest="${sec}" style="flex:1;">${sec}s</button>`).join("")}
-    </div>
+          <div class="set-table-header">
+            <span>SET</span><span>PREVIOUS</span><span>KG</span><span>REPS</span><span>RPE</span><span></span>
+          </div>
+          ${ex.sets.map((set,si)=>{
+            const prev = getPreviousSet(ex.name, si);
+            const prevLabel = prev ? `${prev.weight||'–'}kg × ${prev.reps||'–'}` : "–";
+            return `<div class="set-row ${set.done?'done':''}">
+              <span class="mono set-num">${si+1}</span>
+              <span class="mono set-prev">${prevLabel}</span>
+              <input type="number" class="mono set-input" value="${set.weight}" data-set-field="${exi}|${si}|weight" placeholder="–">
+              <input type="text" class="mono set-input" value="${set.reps}" data-set-field="${exi}|${si}|reps" placeholder="–">
+              <button class="rpe-btn" data-rpe="${exi}|${si}">${set.rpe||'RPE'}</button>
+              <button class="set-check ${set.done?'done':''}" data-set-done="${exi}|${si}">${set.done?svg('check',13):''}</button>
+            </div>`;
+          }).join("")}
+          <button class="add-set-btn" data-add-set="${exi}">${svg('plus',14)} Add Set</button>
+        </div>
+      `;}).join("")}
   `;
 }
 
@@ -462,16 +500,65 @@ function renderBodyTab(){
 }
 
 /* =========================================================
-   NUTRITION TAB
+   NUTRITION TAB — auto calories eaten / burned / deficit
 ========================================================= */
+const ACTIVITY_KCAL_PER_MIN = 8; // rough estimate for mixed strength/conditioning work
+
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+
+function todayEaten(){
+  return state.foodLog.filter(f=>f.date===todayStr()).reduce((a,f)=>a+Number(f.calories||0),0);
+}
+function todayActivityKcal(){
+  return state.workoutLog
+    .filter(s=>s.date===todayStr())
+    .reduce((a,s)=>a + (s.durationMin||0)*ACTIVITY_KCAL_PER_MIN, 0);
+}
+function todayBurned(){
+  return Math.round(state.nutrition.maintenance + todayActivityKcal());
+}
+
 function renderNutritionTab(){
   const {bodyweight, maintenance, deficit} = state.nutrition;
   const target = maintenance - deficit;
   const proteinLow = Math.round(bodyweight*1.6);
   const proteinHigh = Math.round(bodyweight*2);
   const weeklyLoss = ((deficit*7)/7700).toFixed(2);
+
+  const eaten = todayEaten();
+  const burned = todayBurned();
+  const netDeficit = burned - eaten;
+  const activityKcal = Math.round(todayActivityKcal());
+  const todaysFood = state.foodLog.filter(f=>f.date===todayStr());
+
   return `
-    <div class="eyebrow-label" style="margin-top:4px;">Daily Targets</div>
+    <div class="eyebrow-label" style="margin-top:4px;">Today — Auto-Calculated</div>
+    <div class="grid2" style="margin-bottom:8px;">
+      <div class="stat-card"><div class="stat-label">Calories Eaten</div><div class="stat-value" style="color:var(--text);">${Math.round(eaten)}<span class="stat-unit">kcal</span></div></div>
+      <div class="stat-card"><div class="stat-label">Calories Burned</div><div class="stat-value" style="color:var(--steel);">${burned}<span class="stat-unit">kcal</span></div></div>
+    </div>
+    <div class="info-box" style="text-align:center;padding:16px;margin-bottom:8px;background:${netDeficit>=0?'rgba(62,207,142,.08)':'rgba(255,90,31,.08)'};">
+      <div class="stat-label">${netDeficit>=0?'Deficit Created':'Surplus (over target)'}</div>
+      <div class="mono" style="font-weight:900;font-size:28px;color:${netDeficit>=0?'var(--mint)':'var(--accent)'};margin-top:2px;">${netDeficit>=0?'':'+'}${Math.abs(netDeficit)}<span style="font-size:14px;font-weight:700;color:var(--muted);margin-left:4px;">kcal</span></div>
+    </div>
+    <div class="info-box" style="font-size:12px;margin-bottom:16px;">Burned = maintenance (${maintenance} kcal resting) + ~${activityKcal} kcal from today's logged workout time. This is an estimate, not a metabolic measurement.</div>
+
+    <div class="eyebrow-label">Log Food</div>
+    <div class="info-box" style="padding:12px;margin-bottom:8px;">
+      <div style="display:flex;gap:6px;">
+        <input type="text" id="food-name" placeholder="What did you eat?" style="flex:1;background:var(--surface-alt);border-radius:8px;padding:9px;font-size:13px;color:var(--text);">
+        <input type="number" id="food-cal" placeholder="kcal" style="width:70px;background:var(--surface-alt);border-radius:8px;padding:9px;font-size:13px;color:var(--accent);text-align:center;">
+      </div>
+      <button class="btn btn-accent btn-block" data-action="log-food" style="margin-top:8px;">Add</button>
+    </div>
+    ${todaysFood.length===0?`<div class="empty-note" style="padding:12px 0;">No food logged today.</div>`:
+      todaysFood.map(f=>`<div class="history-row">
+        <span style="font-size:13px;font-weight:600;">${f.name}</span>
+        <span class="mono" style="font-size:13px;color:var(--accent);">${f.calories} kcal</span>
+        <button class="del" data-del-food="${f.id}">${svg('x',12)}</button>
+      </div>`).join("")}
+
+    <div class="eyebrow-label">Daily Targets</div>
     <div class="field"><label>Bodyweight</label><div><input type="number" id="n-bw" value="${bodyweight}"><span class="unit">kg</span></div></div>
     <div class="field"><label>Maintenance calories</label><div><input type="number" id="n-maint" value="${maintenance}"><span class="unit">kcal</span></div></div>
     <div class="field"><label>Target deficit</label><div><input type="number" id="n-def" value="${deficit}"><span class="unit">kcal</span></div></div>
@@ -777,7 +864,8 @@ function attachHandlers(){
   if(addExBtn) addExBtn.addEventListener("click", ()=>{
     const picker = document.getElementById("ex-picker");
     if(picker && picker.value){
-      state.session.exercises.push({ name: picker.value, sets: [] });
+      state.session.exercises.push({ name: picker.value, notes:"", restDuration:0,
+        sets: [{ weight:"", reps:"", rpe:"", done:false }] });
       render();
     }
   });
@@ -787,28 +875,53 @@ function attachHandlers(){
       render();
     });
   });
-  document.querySelectorAll("[data-log-set]").forEach(el=>{
-    el.addEventListener("click", ()=>{
-      const exi = Number(el.dataset.logSet);
-      const w = document.getElementById(`w-${exi}`).value;
-      const r = document.getElementById(`r-${exi}`).value;
-      if(!r) return;
-      state.session.exercises[exi].sets.push({ weight: w, reps: r });
-      render();
-      startTimer(state.restDuration);
+  document.querySelectorAll("[data-notes-exercise]").forEach(el=>{
+    el.addEventListener("change", ()=>{
+      state.session.exercises[Number(el.dataset.notesExercise)].notes = el.value;
+      persist();
     });
   });
-  document.querySelectorAll("[data-del-set]").forEach(el=>{
+  document.querySelectorAll("[data-rest-toggle]").forEach(el=>{
     el.addEventListener("click", ()=>{
-      const [exi,si] = el.dataset.delSet.split("|").map(Number);
-      state.session.exercises[exi].sets.splice(si,1);
+      const ex = state.session.exercises[Number(el.dataset.restToggle)];
+      const idx = REST_OPTIONS.indexOf(ex.restDuration || 0);
+      ex.restDuration = REST_OPTIONS[(idx+1) % REST_OPTIONS.length];
       render();
     });
   });
-  document.querySelectorAll("[data-rest]").forEach(el=>{
+  document.querySelectorAll("[data-add-set]").forEach(el=>{
     el.addEventListener("click", ()=>{
-      state.restDuration = Number(el.dataset.rest);
-      startTimer(state.restDuration);
+      const ex = state.session.exercises[Number(el.dataset.addSet)];
+      const last = ex.sets[ex.sets.length-1];
+      ex.sets.push({ weight: last?last.weight:"", reps: last?last.reps:"", rpe:"", done:false });
+      render();
+    });
+  });
+  document.querySelectorAll("[data-set-field]").forEach(el=>{
+    el.addEventListener("change", ()=>{
+      const [exi,si,field] = el.dataset.setField.split("|");
+      state.session.exercises[Number(exi)].sets[Number(si)][field] = el.value;
+      persist();
+    });
+  });
+  document.querySelectorAll("[data-rpe]").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      const [exi,si] = el.dataset.rpe.split("|").map(Number);
+      const set = state.session.exercises[exi].sets[si];
+      const idx = RPE_OPTIONS.indexOf(set.rpe || "–");
+      set.rpe = RPE_OPTIONS[(idx+1) % RPE_OPTIONS.length];
+      if(set.rpe === "–") set.rpe = "";
+      render();
+    });
+  });
+  document.querySelectorAll("[data-set-done]").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      const [exi,si] = el.dataset.setDone.split("|").map(Number);
+      const ex = state.session.exercises[exi];
+      const set = ex.sets[si];
+      set.done = !set.done;
+      render();
+      if(set.done && ex.restDuration>0) startTimer(ex.restDuration);
     });
   });
 
@@ -888,6 +1001,24 @@ function attachHandlers(){
       const delta = Number(el.dataset.calNav);
       const next = (state.calendarMonthOffset||0) + delta;
       if(next<=0) state.calendarMonthOffset = next;
+      render();
+    });
+  });
+
+  // Nutrition tab — food log
+  const logFoodBtn = document.querySelector('[data-action="log-food"]');
+  if(logFoodBtn) logFoodBtn.addEventListener("click", ()=>{
+    const nameEl = document.getElementById("food-name");
+    const calEl = document.getElementById("food-cal");
+    const name = nameEl.value.trim();
+    const cal = Number(calEl.value);
+    if(!name || !cal) return;
+    state.foodLog.unshift({ id: Date.now(), date: todayStr(), name, calories: cal });
+    render();
+  });
+  document.querySelectorAll("[data-del-food]").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      state.foodLog = state.foodLog.filter(f=>f.id !== Number(el.dataset.delFood));
       render();
     });
   });
