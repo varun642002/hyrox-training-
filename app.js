@@ -56,46 +56,83 @@ const WEEKS = Array.from({length:8},(_,i)=>buildWeek(i+1));
 
 /* ---------- Exercise library ---------- */
 const LIBRARY = {
-  "Barbell":[["Back Squat","4x6","reps"],["Front Squat","4x6","reps"],["Deadlift","4x5","reps"],
-    ["Romanian Deadlift","3x8","reps"],["Sumo Deadlift","4x5","reps"],["Bench Press","4x6","reps"],
-    ["Incline Bench Press","4x8","reps"],["Overhead Press","3x8","reps"],["Push Press","3x6","reps"],
-    ["Bent-Over Row","4x8","reps"],["Barbell Curl","3x10","reps"],["Hip Thrust","3x10","reps"]],
-  "Dumbbell":[["DB Bench Press","4x8","reps"],["DB Row","4x10","reps"],["DB Shoulder Press","3x10","reps"],
-    ["Goblet Squat","3x12","reps"],["Walking Lunges","3x12/leg","reps"],["Bulgarian Split Squat","3x10/leg","reps"],
-    ["Farmer's Carry","4x40m","distance"],["DB Curl","3x12","reps"],["Lateral Raise","3x12","reps"],
-    ["DB RDL","3x10","reps"],["Renegade Row","3x8/side","reps"]],
-  "Machine":[["Leg Press","4x10","reps"],["Hack Squat","4x10","reps"],["Leg Extension","3x12","reps"],
-    ["Leg Curl","3x12","reps"],["Lat Pulldown","4x10","reps"],["Seated Cable Row","4x10","reps"],
-    ["Chest Press Machine","4x10","reps"],["Shoulder Press Machine","3x10","reps"],["Pec Deck","3x12","reps"],
-    ["Cable Crossover","3x12","reps"],["Smith Machine Squat","4x8","reps"],["Assisted Pull-up","3x8","reps"],
-    ["Assisted Dip","3x8","reps"],["Cable Tricep Pushdown","3x12","reps"],["Cable Face Pull","3x15","reps"],
-    ["Hip Abductor Machine","3x15","reps"],["Hip Adductor Machine","3x15","reps"],["Calf Raise Machine","4x15","reps"]],
-  "Bodyweight":[["Push-up","3x15","reps"],["Pull-up","3x8","reps"],["Chin-up","3x8","reps"],
-    ["Dip","3x10","reps"],["Plank","3x45s","time"],["Sit-up","3x15","reps"],["Air Squat","3x20","reps"],
-    ["Burpee","3x10","reps"],["Mountain Climbers","3x30s","time"],["Jump Squat","3x12","reps"],
-    ["Handstand Hold","3x20s","time"],["Pistol Squat","3x5/leg","reps"]],
-  "Cardio Machine":[["Treadmill","20 min","time"],["Rowing Machine","2000m","distance"],
-    ["Ski Erg","1000m","distance"],["Assault Bike","15 min","time"],["Stationary Bike","30 min","time"],
-    ["Elliptical","25 min","time"],["Stairmaster","20 min","time"],["Jacob's Ladder","10 min","time"]],
-  "Cardio Outdoor":[["Running","5 km","distance"],["Cycling","20 km","distance"],["Swimming","1500m","distance"],
-    ["Walking","30 min","time"],["Hiking","60 min","time"],["Jump Rope","10 min","time"]],
-  "Hyrox Station":[["Sled Push","4x25m","distance"],["Sled Pull","4x25m","distance"],
-    ["Sandbag Lunges","4x25m","distance"],["Wall Balls","4x15","reps"],["Burpee Broad Jumps","4x10","reps"],
-    ["Farmer's Carry (station)","4x200m","distance"],["Ski Erg (station)","4x250m","distance"],["Rowing (station)","4x250m","distance"]],
-  "Mobility / Stretch":[["Hip Flexor Stretch","2x30s/side","time"],["Couch Stretch","2x45s/side","time"],
-    ["Pigeon Pose","2x45s/side","time"],["World's Greatest Stretch","2x5/side","reps"],
-    ["Thoracic Rotation","2x10/side","reps"],["Shoulder Dislocate","2x10","reps"],["Cat-Cow","2x10","reps"],
-    ["90/90 Hip Switch","2x8/side","reps"],["Hamstring Stretch","2x30s/side","time"],["Calf Stretch","2x30s/side","time"],
-    ["Ankle Circles","2x10/side","reps"],["Foam Rolling — Quads","2 min/side","time"],
-    ["Foam Rolling — Back","2 min","time"],["Band Pull-Apart","3x15","reps"],["Deep Squat Hold","3x30s","time"]]
+  "Barbell":[["Back Squat","4x6","reps","Legs"],["Front Squat","4x6","reps","Legs"],["Deadlift","4x5","reps","Back"],
+    ["Romanian Deadlift","3x8","reps","Legs"],["Sumo Deadlift","4x5","reps","Legs"],["Bench Press","4x6","reps","Chest"],
+    ["Incline Bench Press","4x8","reps","Chest"],["Overhead Press","3x8","reps","Shoulders"],["Push Press","3x6","reps","Shoulders"],
+    ["Bent-Over Row","4x8","reps","Back"],["Barbell Curl","3x10","reps","Arms"],["Hip Thrust","3x10","reps","Legs"]],
+  "Dumbbell":[["DB Bench Press","4x8","reps","Chest"],["DB Row","4x10","reps","Back"],["DB Shoulder Press","3x10","reps","Shoulders"],
+    ["Goblet Squat","3x12","reps","Legs"],["Walking Lunges","3x12/leg","reps","Legs"],["Bulgarian Split Squat","3x10/leg","reps","Legs"],
+    ["Farmer's Carry","4x40m","distance","Core"],["DB Curl","3x12","reps","Arms"],["Lateral Raise","3x12","reps","Shoulders"],
+    ["DB RDL","3x10","reps","Legs"],["Renegade Row","3x8/side","reps","Back"]],
+  "Machine":[["Leg Press","4x10","reps","Legs"],["Hack Squat","4x10","reps","Legs"],["Leg Extension","3x12","reps","Legs"],
+    ["Leg Curl","3x12","reps","Legs"],["Lat Pulldown","4x10","reps","Back"],["Seated Cable Row","4x10","reps","Back"],
+    ["Chest Press Machine","4x10","reps","Chest"],["Shoulder Press Machine","3x10","reps","Shoulders"],["Pec Deck","3x12","reps","Chest"],
+    ["Cable Crossover","3x12","reps","Chest"],["Smith Machine Squat","4x8","reps","Legs"],["Assisted Pull-up","3x8","reps","Back"],
+    ["Assisted Dip","3x8","reps","Chest"],["Cable Tricep Pushdown","3x12","reps","Arms"],["Cable Face Pull","3x15","reps","Shoulders"],
+    ["Hip Abductor Machine","3x15","reps","Legs"],["Hip Adductor Machine","3x15","reps","Legs"],["Calf Raise Machine","4x15","reps","Legs"]],
+  "Bodyweight":[["Push-up","3x15","reps","Chest"],["Pull-up","3x8","reps","Back"],["Chin-up","3x8","reps","Back"],
+    ["Dip","3x10","reps","Chest"],["Plank","3x45s","time","Core"],["Sit-up","3x15","reps","Core"],["Air Squat","3x20","reps","Legs"],
+    ["Burpee","3x10","reps","Core"],["Mountain Climbers","3x30s","time","Core"],["Jump Squat","3x12","reps","Legs"],
+    ["Handstand Hold","3x20s","time","Shoulders"],["Pistol Squat","3x5/leg","reps","Legs"]],
+  "Cardio Machine":[["Treadmill","20 min","time","Cardio"],["Rowing Machine","2000m","distance","Cardio"],
+    ["Ski Erg","1000m","distance","Cardio"],["Assault Bike","15 min","time","Cardio"],["Stationary Bike","30 min","time","Cardio"],
+    ["Elliptical","25 min","time","Cardio"],["Stairmaster","20 min","time","Cardio"],["Jacob's Ladder","10 min","time","Cardio"]],
+  "Cardio Outdoor":[["Running","5 km","distance","Cardio"],["Cycling","20 km","distance","Cardio"],["Swimming","1500m","distance","Cardio"],
+    ["Walking","30 min","time","Cardio"],["Hiking","60 min","time","Cardio"],["Jump Rope","10 min","time","Cardio"]],
+  "Hyrox Station":[["Sled Push","4x25m","distance","Legs"],["Sled Pull","4x25m","distance","Back"],
+    ["Sandbag Lunges","4x25m","distance","Legs"],["Wall Balls","4x15","reps","Legs"],["Burpee Broad Jumps","4x10","reps","Core"],
+    ["Farmer's Carry (station)","4x200m","distance","Core"],["Ski Erg (station)","4x250m","distance","Cardio"],["Rowing (station)","4x250m","distance","Cardio"]],
+  "Mobility / Stretch":[["Hip Flexor Stretch","2x30s/side","time","Mobility"],["Couch Stretch","2x45s/side","time","Mobility"],
+    ["Pigeon Pose","2x45s/side","time","Mobility"],["World's Greatest Stretch","2x5/side","reps","Mobility"],
+    ["Thoracic Rotation","2x10/side","reps","Mobility"],["Shoulder Dislocate","2x10","reps","Mobility"],["Cat-Cow","2x10","reps","Mobility"],
+    ["90/90 Hip Switch","2x8/side","reps","Mobility"],["Hamstring Stretch","2x30s/side","time","Mobility"],["Calf Stretch","2x30s/side","time","Mobility"],
+    ["Ankle Circles","2x10/side","reps","Mobility"],["Foam Rolling — Quads","2 min/side","time","Mobility"],
+    ["Foam Rolling — Back","2 min","time","Mobility"],["Band Pull-Apart","3x15","reps","Shoulders"],["Deep Squat Hold","3x30s","time","Mobility"]]
 };
+
+// Names that appear only in the Hyrox 8-week Plan (slightly different wording than library entries)
+const PLAN_MUSCLE_MAP = {
+  "Back Squat":"Legs","Romanian Deadlift":"Legs","Walking Lunges":"Legs","Plank":"Core","Pallof Press":"Core",
+  "Warm-up":"Cardio","Intervals":"Cardio","Cool-down":"Cardio","Bench Press":"Chest","Bent-Over Row":"Back",
+  "Overhead Press":"Shoulders","Farmer's Carry":"Core","Hanging Leg Raise":"Core","Row / Ski / Run":"Cardio",
+  "Sled Push/Pull":"Legs","Wall Balls":"Legs","Burpee Broad Jumps":"Core","Ski Erg":"Cardio",
+  "Weighted Sit-Up":"Core","Walk / Mobility / Light Swim":"Mobility"
+};
+
+const RADAR_MUSCLES = ["Back","Chest","Legs","Core","Arms","Shoulders"];
 
 function allLibraryExercises(){
   const custom = LS.get("hx_custom_exercises", []);
   const list = [];
-  Object.entries(LIBRARY).forEach(([cat, items])=> items.forEach(([name,presc,unit])=> list.push({name,cat,presc,unit,custom:false})));
+  Object.entries(LIBRARY).forEach(([cat, items])=> items.forEach(([name,presc,unit,muscle])=> list.push({name,cat,presc,unit,muscle,custom:false})));
   custom.forEach(ex=> list.push({...ex, custom:true}));
   return list;
+}
+
+function getMuscle(name){
+  for(const items of Object.values(LIBRARY)){
+    const hit = items.find(i=>i[0]===name);
+    if(hit) return hit[3];
+  }
+  const custom = LS.get("hx_custom_exercises", []);
+  const c = custom.find(i=>i.name===name);
+  if(c) return c.muscle || "Other";
+  if(PLAN_MUSCLE_MAP[name]) return PLAN_MUSCLE_MAP[name];
+  return "Other";
+}
+
+function parseSets(presc){
+  const m = /^(\d+)\s*x/i.exec(presc||"");
+  return m ? Number(m[1]) : 3;
+}
+
+function getPlanPresc(weekNum, dayName, exName){
+  const w = WEEKS[weekNum-1];
+  if(!w) return "";
+  const d = w.days.find(dd=>dd.day===dayName);
+  if(!d) return "";
+  const ex = d.exercises.find(e=>e.name===exName);
+  return ex ? ex.presc : "";
 }
 
 /* ---------- Icons (inline SVG, no deps) ---------- */
@@ -129,6 +166,8 @@ const state = {
   libCategory: "All",
   libSearch: "",
   showCustomForm: false,
+  chartMetric: "sets",
+  calendarMonthOffset: 0,
   timer: null
 };
 
@@ -372,6 +411,9 @@ function customExerciseForm(){
     <select class="select-input" id="custom-cat">
       ${Object.keys(LIBRARY).map(c=>`<option value="${c}">${c}</option>`).join("")}
     </select>
+    <select class="select-input" id="custom-muscle">
+      ${[...RADAR_MUSCLES,"Cardio","Mobility","Other"].map(m=>`<option value="${m}">${m}</option>`).join("")}
+    </select>
     <input type="text" id="custom-presc" placeholder="Default prescription (e.g. 3x12)" style="background:var(--surface-alt);border-radius:8px;padding:10px;width:100%;margin-bottom:8px;font-size:14px;color:var(--text);">
     <button class="btn btn-accent btn-block" data-action="save-custom">Save Exercise</button>
   </div>`;
@@ -446,8 +488,171 @@ function renderNutritionTab(){
 }
 
 /* =========================================================
-   PROGRESS TAB
+   PROGRESS TAB — stats, radar, weekly activity, calendar/streak
 ========================================================= */
+
+/* --- data helpers --- */
+function activityDates(){
+  // Set of "YYYY-MM-DD" strings with any logged activity (plan completions or freestyle sessions)
+  const dates = new Set();
+  Object.values(state.completed).forEach(ts=> dates.add(new Date(ts).toISOString().slice(0,10)));
+  state.workoutLog.forEach(s=> dates.add(s.date));
+  return dates;
+}
+
+function computeStreak(){
+  const dates = activityDates();
+  let streak = 0;
+  let cursor = new Date();
+  cursor.setHours(0,0,0,0);
+  // if today has no activity yet, start counting from yesterday (still an active streak)
+  if(!dates.has(cursor.toISOString().slice(0,10))) cursor.setDate(cursor.getDate()-1);
+  while(dates.has(cursor.toISOString().slice(0,10))){
+    streak++;
+    cursor.setDate(cursor.getDate()-1);
+  }
+  return streak;
+}
+
+function computeMuscleDistribution(daysBack, offsetDays){
+  // offsetDays=0 => most recent `daysBack` days. offsetDays=daysBack => the period before that.
+  const now = Date.now();
+  const end = now - offsetDays*86400000;
+  const start = end - daysBack*86400000;
+  const counts = {}; RADAR_MUSCLES.forEach(m=> counts[m]=0);
+
+  Object.entries(state.completed).forEach(([key, ts])=>{
+    if(ts < start || ts > end) return;
+    const [wk,,exName] = key.split("|");
+    const muscle = getMuscle(exName);
+    if(RADAR_MUSCLES.includes(muscle)){
+      const presc = getPlanPresc(Number(wk), key.split("|")[1], exName);
+      counts[muscle] += parseSets(presc);
+    }
+  });
+  state.workoutLog.forEach(s=>{
+    const t = new Date(s.date).getTime();
+    if(t < start || t > end) return;
+    s.exercises.forEach(ex=>{
+      const muscle = getMuscle(ex.name);
+      if(RADAR_MUSCLES.includes(muscle)) counts[muscle] += ex.sets.length;
+    });
+  });
+  return counts;
+}
+
+function computeWeeklyActivity(weeks=8){
+  const buckets = Array.from({length:weeks},(_,i)=>({duration:0, volume:0, sets:0}));
+  const now = Date.now();
+  state.workoutLog.forEach(s=>{
+    const t = new Date(s.date).getTime();
+    const idx = Math.floor((now - t) / (7*86400000));
+    if(idx>=0 && idx<weeks){
+      const b = buckets[weeks-1-idx];
+      b.duration += s.durationMin || 0;
+      b.volume += s.volume || 0;
+      b.sets += s.exercises.reduce((a,ex)=>a+ex.sets.length,0);
+    }
+  });
+  Object.values(state.completed).forEach((ts,i)=>{
+    const idx = Math.floor((now - ts) / (7*86400000));
+    if(idx>=0 && idx<weeks){
+      buckets[weeks-1-idx].sets += 1; // rough count; plan sets already reflected via radar, this is activity volume proxy
+    }
+  });
+  return buckets;
+}
+
+/* --- SVG radar chart --- */
+function radarChart(current, previous){
+  const size=260, cx=size/2, cy=size/2, r=90;
+  const n = RADAR_MUSCLES.length;
+  const maxVal = Math.max(4, ...Object.values(current), ...Object.values(previous));
+  function pt(i,val){
+    const angle = (Math.PI*2*i/n) - Math.PI/2;
+    const dist = (val/maxVal)*r;
+    return [cx+dist*Math.cos(angle), cy+dist*Math.sin(angle)];
+  }
+  function labelPt(i){
+    const angle = (Math.PI*2*i/n) - Math.PI/2;
+    return [cx+(r+26)*Math.cos(angle), cy+(r+22)*Math.sin(angle)];
+  }
+  function polygon(data,color,fillOpacity){
+    const pts = RADAR_MUSCLES.map((m,i)=>pt(i,data[m]).join(",")).join(" ");
+    return `<polygon points="${pts}" fill="${color}" fill-opacity="${fillOpacity}" stroke="${color}" stroke-width="2"/>`;
+  }
+  const rings = [0.33,0.66,1].map(f=>{
+    const pts = RADAR_MUSCLES.map((m,i)=>pt(i,maxVal*f).join(",")).join(" ");
+    return `<polygon points="${pts}" fill="none" stroke="#33333d" stroke-width="1"/>`;
+  }).join("");
+  const spokes = RADAR_MUSCLES.map((m,i)=>{
+    const [x,y] = pt(i,maxVal);
+    return `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="#33333d" stroke-width="1"/>`;
+  }).join("");
+  const labels = RADAR_MUSCLES.map((m,i)=>{
+    const [x,y] = labelPt(i);
+    return `<text x="${x}" y="${y}" fill="#8B8B94" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="middle">${m}</text>`;
+  }).join("");
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+    ${rings}${spokes}
+    ${polygon(previous,"#8B8B94",0.12)}
+    ${polygon(current,"#FF5A1F",0.28)}
+    ${labels}
+  </svg>`;
+}
+
+/* --- SVG weekly bar chart --- */
+function weeklyBarChart(buckets, metric){
+  const w=300, h=120, barW= w/buckets.length*0.55, gap = w/buckets.length;
+  const vals = buckets.map(b=>b[metric]);
+  const max = Math.max(1, ...vals);
+  const bars = buckets.map((b,i)=>{
+    const val = b[metric];
+    const bh = (val/max)*(h-20);
+    const x = i*gap + (gap-barW)/2;
+    const y = h-bh;
+    return `<rect x="${x}" y="${y}" width="${barW}" height="${bh}" rx="3" fill="${i===buckets.length-1?'#FF5A1F':'#4FA8D8'}"/>`;
+  }).join("");
+  return `<svg width="100%" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">${bars}</svg>`;
+}
+
+/* --- calendar grid (Mon-Sun) for a given month --- */
+function renderCalendarMonth(monthOffset){
+  const base = new Date();
+  base.setDate(1);
+  base.setMonth(base.getMonth()+monthOffset);
+  const year = base.getFullYear(), month = base.getMonth();
+  const firstDay = new Date(year, month, 1);
+  const startWeekday = (firstDay.getDay()+6)%7; // Mon=0
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const dates = activityDates();
+  const monthName = base.toLocaleString('default',{month:'long', year:'numeric'});
+
+  let cells = "";
+  for(let i=0;i<startWeekday;i++) cells += `<div></div>`;
+  for(let d=1; d<=daysInMonth; d++){
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const active = dates.has(dateStr);
+    const isToday = dateStr === new Date().toISOString().slice(0,10);
+    cells += `<div style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:8px;
+      font-size:12px;font-weight:700;font-family:'SF Mono',monospace;
+      background:${active?'#FF5A1F':'transparent'};
+      color:${active?'#151515':'var(--muted)'};
+      ${isToday && !active ? 'box-shadow:inset 0 0 0 1.5px var(--steel);color:var(--steel);':''}">${d}</div>`;
+  }
+  return `
+    <div class="row-between" style="margin-bottom:10px;">
+      <button class="btn btn-ghost" data-cal-nav="-1" style="padding:6px 12px;">‹</button>
+      <span style="font-weight:800;font-size:14px;">${monthName}</span>
+      <button class="btn btn-ghost" data-cal-nav="1" style="padding:6px 12px;" ${monthOffset>=0?'disabled':''}>›</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;font-size:10px;color:var(--muted);font-weight:700;text-align:center;margin-bottom:6px;">
+      <div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div><div>S</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">${cells}</div>
+  `;
+}
+
 function renderProgressTab(){
   let total=0, done=0;
   const perWeek = WEEKS.map(w=>{
@@ -458,16 +663,49 @@ function renderProgressTab(){
   const overall = total? Math.round(done/total*100):0;
   const phaseColor = {base:'var(--steel)',build:'var(--steel)',load:'var(--accent)',peak:'var(--accent)',deload:'var(--mint)'};
   const sessions = state.workoutLog.length;
+  const streak = computeStreak();
+  const metric = state.chartMetric || "sets";
+  const buckets = computeWeeklyActivity(8);
+  const currentMuscles = computeMuscleDistribution(30,0);
+  const prevMuscles = computeMuscleDistribution(30,30);
+  const totalVolume = state.workoutLog.reduce((a,s)=>a+(s.volume||0),0);
+  const totalSets = state.workoutLog.reduce((a,s)=>a+s.exercises.reduce((x,e)=>x+e.sets.length,0),0);
 
   return `
-    <div class="eyebrow-label" style="margin-top:4px;">Phase 1 Completion</div>
-    <div class="info-box" style="text-align:center;padding:20px;">
+    <div class="eyebrow-label" style="margin-top:4px;">Overview</div>
+    <div class="grid2" style="margin-bottom:16px;">
+      <div class="stat-card"><div class="stat-label">Streak</div><div class="stat-value" style="color:var(--accent);">🔥 ${streak}<span class="stat-unit">days</span></div></div>
+      <div class="stat-card"><div class="stat-label">Freestyle Sessions</div><div class="stat-value">${sessions}</div></div>
+      <div class="stat-card"><div class="stat-label">Total Volume</div><div class="stat-value">${Math.round(totalVolume).toLocaleString()}<span class="stat-unit">kg</span></div></div>
+      <div class="stat-card"><div class="stat-label">Total Sets Logged</div><div class="stat-value">${totalSets}</div></div>
+    </div>
+
+    <div class="eyebrow-label">Weekly Activity — Last 8 Weeks</div>
+    <div class="info-box" style="padding:14px;">
+      <div style="display:flex;gap:6px;margin-bottom:10px;">
+        ${["sets","duration","volume"].map(m=>`<button class="cat-chip ${metric===m?'active':''}" data-metric="${m}">${m.charAt(0).toUpperCase()+m.slice(1)}</button>`).join("")}
+      </div>
+      ${weeklyBarChart(buckets, metric)}
+    </div>
+
+    <div class="eyebrow-label">Muscle Distribution — Last 30 Days</div>
+    <div class="info-box" style="display:flex; flex-direction:column; align-items:center; padding:16px;">
+      ${radarChart(currentMuscles, prevMuscles)}
+      <div style="display:flex; gap:16px; margin-top:6px;">
+        <span style="font-size:11px;color:var(--muted);"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);margin-right:5px;"></span>Current</span>
+        <span style="font-size:11px;color:var(--muted);"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--muted);margin-right:5px;"></span>Previous 30d</span>
+      </div>
+    </div>
+
+    <div class="eyebrow-label">Calendar</div>
+    <div class="info-box" style="padding:14px;">
+      ${renderCalendarMonth(state.calendarMonthOffset||0)}
+    </div>
+
+    <div class="eyebrow-label">Phase 1 Completion</div>
+    <div class="info-box" style="text-align:center;padding:20px;margin-bottom:16px;">
       <div class="mono" style="font-weight:900;font-size:36px;color:var(--accent);">${overall}%</div>
       <div style="font-size:12px;color:var(--muted);margin-top:4px;">${done} of ${total} plan sessions logged</div>
-    </div>
-    <div class="grid2" style="margin-top:12px;margin-bottom:16px;">
-      <div class="stat-card"><div class="stat-label">Freestyle Sessions</div><div class="stat-value">${sessions}</div></div>
-      <div class="stat-card"><div class="stat-label">Body Logs</div><div class="stat-value">${state.bodylog.length}</div></div>
     </div>
     <div class="eyebrow-label">By Week</div>
     ${perWeek.map(w=>`<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
@@ -496,7 +734,8 @@ function attachHandlers(){
   document.querySelectorAll("[data-toggle]").forEach(el=>{
     el.addEventListener("click", ()=>{
       const key = el.dataset.toggle;
-      state.completed[key] = !state.completed[key];
+      if(state.completed[key]) delete state.completed[key];
+      else state.completed[key] = Date.now();
       render();
     });
   });
@@ -510,9 +749,18 @@ function attachHandlers(){
   const finishBtn = document.querySelector('[data-action="finish-session"]');
   if(finishBtn) finishBtn.addEventListener("click", ()=>{
     if(state.session.exercises.length){
+      const finishedAt = Date.now();
+      const durationMin = Math.max(1, Math.round((finishedAt - state.session.startedAt)/60000));
+      let volume = 0;
+      state.session.exercises.forEach(ex=> ex.sets.forEach(s=>{
+        const w = parseFloat(s.weight); const r = parseFloat(s.reps);
+        if(!isNaN(w) && !isNaN(r)) volume += w*r;
+      }));
       state.workoutLog.unshift({
         id: Date.now(),
         date: new Date().toISOString().slice(0,10),
+        startedAt: state.session.startedAt,
+        finishedAt, durationMin, volume,
         exercises: state.session.exercises
       });
     }
@@ -598,9 +846,10 @@ function attachHandlers(){
   if(saveCustomBtn) saveCustomBtn.addEventListener("click", ()=>{
     const name = document.getElementById("custom-name").value.trim();
     const cat = document.getElementById("custom-cat").value;
+    const muscle = document.getElementById("custom-muscle").value;
     const presc = document.getElementById("custom-presc").value.trim() || "—";
     if(!name) return;
-    state.customExercises.push({ name, cat, presc, unit:"reps" });
+    state.customExercises.push({ name, cat, presc, unit:"reps", muscle });
     state.showCustomForm = false;
     render();
   });
@@ -626,6 +875,19 @@ function attachHandlers(){
   document.querySelectorAll("[data-del-body]").forEach(el=>{
     el.addEventListener("click", ()=>{
       state.bodylog = state.bodylog.filter(e=>e.id !== Number(el.dataset.delBody));
+      render();
+    });
+  });
+
+  // Progress tab
+  document.querySelectorAll("[data-metric]").forEach(el=>{
+    el.addEventListener("click", ()=>{ state.chartMetric = el.dataset.metric; render(); });
+  });
+  document.querySelectorAll("[data-cal-nav]").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      const delta = Number(el.dataset.calNav);
+      const next = (state.calendarMonthOffset||0) + delta;
+      if(next<=0) state.calendarMonthOffset = next;
       render();
     });
   });
