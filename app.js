@@ -188,7 +188,9 @@ const ICONS = {
   check:'<path d="M4 12l5 5L20 6" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
   x:'<path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>',
   plus:'<path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>',
-  gear:'<circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2.8v3M12 18.2v3M2.8 12h3M18.2 12h3M5.5 5.5l2.1 2.1M16.4 16.4l2.1 2.1M18.5 5.5l-2.1 2.1M7.6 16.4l-2.1 2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'
+  gear:'<circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2.8v3M12 18.2v3M2.8 12h3M18.2 12h3M5.5 5.5l2.1 2.1M16.4 16.4l2.1 2.1M18.5 5.5l-2.1 2.1M7.6 16.4l-2.1 2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+  home:'<path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>',
+  more:'<circle cx="5" cy="12" r="1.8" fill="currentColor"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/><circle cx="19" cy="12" r="1.8" fill="currentColor"/>'
 };
 function svg(name, size=19){ return `<svg width="${size}" height="${size}" viewBox="0 0 24 24">${ICONS[name]}</svg>`; }
 
@@ -196,7 +198,7 @@ function svg(name, size=19){ return `<svg width="${size}" height="${size}" viewB
    STATE
 ========================================================= */
 const state = {
-  tab: LS.get("hx_tab","plan"),
+  tab: LS.get("hx_tab","home"),
   activeWeek: LS.get("hx_active_week",1),
   activeLevel: LS.get("hx_active_level","intermediate"),
   activeDayIdx: 0,
@@ -246,7 +248,7 @@ function profileCalorieTarget(){
 }
 
 function persist(){
-  LS.set("hx_tab", state.tab);
+  LS.set("hx_tab", state.tab==="more" ? (LS.get("hx_tab","home")) : state.tab);
   LS.set("hx_active_week", state.activeWeek);
   LS.set("hx_active_level", state.activeLevel);
   LS.set("hx_profile", state.profile);
@@ -265,6 +267,8 @@ function persist(){
 
 function render(){
   const root = document.getElementById("app");
+  const MORE_TABS = ["library","body","nutrition","settings"];
+  const isMoreActive = MORE_TABS.includes(state.tab) || state.tab==="more";
   root.innerHTML = `
     <header class="app-header" style="display:flex;align-items:flex-end;justify-content:space-between;">
       <div>
@@ -275,16 +279,17 @@ function render(){
     </header>
     <main id="main"></main>
     ${renderTimerOverlay()}
+    ${state.tab==="more" ? renderMoreSheet() : ""}
     <nav class="bottom-nav">
+      ${navBtn("home","Home")}
       ${navBtn("plan","Plan")}
       ${navBtn("workout","Workout")}
-      ${navBtn("library","Library")}
-      ${navBtn("body","Body")}
-      ${navBtn("nutrition","Fuel")}
       ${navBtn("progress","Progress")}
+      <button class="nav-btn ${isMoreActive?'active':''}" data-nav="more">${svg('more')}<span>More</span></button>
     </nav>
   `;
   const main = document.getElementById("main");
+  if(state.tab==="home") main.innerHTML = renderHomeTab();
   if(state.tab==="plan") main.innerHTML = renderPlanTab();
   if(state.tab==="workout") main.innerHTML = renderWorkoutTab();
   if(state.tab==="library") main.innerHTML = renderLibraryTab();
@@ -292,8 +297,31 @@ function render(){
   if(state.tab==="nutrition") main.innerHTML = renderNutritionTab();
   if(state.tab==="progress") main.innerHTML = renderProgressTab();
   if(state.tab==="settings") main.innerHTML = renderSettingsTab();
+  if(state.tab==="more") main.innerHTML = ""; // sheet covers it
   attachHandlers();
   persist();
+}
+
+function renderMoreSheet(){
+  const items = [
+    {id:"library", label:"Library", desc:"Browse exercises & equipment"},
+    {id:"body", label:"Body", desc:"Weight, measurements, calculators"},
+    {id:"nutrition", label:"Fuel", desc:"Meals, calories, macros"},
+    {id:"settings", label:"Settings", desc:"Rest timer, backups, preferences"}
+  ];
+  return `<div class="more-sheet-backdrop" data-close-more>
+    <div class="more-sheet" onclick="event.stopPropagation()">
+      <div class="more-sheet-handle"></div>
+      <div class="eyebrow-label" style="margin-top:0;">More</div>
+      ${items.map(it=>`<button class="more-sheet-item" data-nav="${it.id}">
+        <span class="more-sheet-icon">${svg(it.id,20)}</span>
+        <span style="flex:1;text-align:left;">
+          <div style="font-weight:800;font-size:15px;">${it.label}</div>
+          <div style="font-size:12px;color:var(--muted);">${it.desc}</div>
+        </span>
+      </button>`).join("")}
+    </div>
+  </div>`;
 }
 
 function navBtn(id,label){
@@ -308,6 +336,107 @@ function weekProgress(w){
   w.days.forEach(d=>d.exercises.forEach(ex=>{ total++; if(state.completed[`${w.week}|${d.day}|${ex.name}`]) done++; }));
   return total? Math.round(done/total*100):0;
 }
+
+/* =========================================================
+   HOME TAB — dashboard
+========================================================= */
+function overallPlanProgress(){
+  let total=0, done=0;
+  WEEKS.forEach(w=> w.days.forEach(d=> d.exercises.forEach(ex=>{
+    total++; if(state.completed[`${w.week}|${d.day}|${ex.name}`]) done++;
+  })));
+  return total? Math.round(done/total*100):0;
+}
+
+function todaysPlannedDay(){
+  // Best-effort mapping: today's weekday index -> plan day index (Mon=Day1...Sat=Day6, Sun=rest)
+  const dow = new Date().getDay(); // 0=Sun..6=Sat
+  const idx = dow===0 ? null : dow-1; // Mon(1)->0 ... Sat(6)->5
+  const week = WEEKS[state.activeWeek-1];
+  if(idx===null || idx>=week.days.length) return null;
+  return week.days[idx];
+}
+
+function greeting(){
+  const h = new Date().getHours();
+  if(h<5) return "Still up?";
+  if(h<12) return "Good morning";
+  if(h<17) return "Good afternoon";
+  if(h<21) return "Good evening";
+  return "Winding down?";
+}
+
+function renderHomeTab(){
+  const week = WEEKS[state.activeWeek-1];
+  const plannedDay = todaysPlannedDay();
+  const planPct = overallPlanProgress();
+  const streak = computeStreak();
+  const targets = macroTargets();
+  const eaten = Math.round(todayEaten());
+  const proteinToday = Math.round(todayMacros().protein);
+  const latestWeight = state.bodylog[0];
+  const dateStr = new Date().toLocaleDateString('default',{weekday:'long', month:'long', day:'numeric'});
+
+  let dayDone = 0, dayTotal = 0;
+  if(plannedDay){
+    dayTotal = plannedDay.exercises.length;
+    dayDone = plannedDay.exercises.filter(ex=> state.completed[`${week.week}|${plannedDay.day}|${ex.name}`]).length;
+  }
+
+  return `
+    <div style="margin-bottom:4px;">
+      <div style="font-size:13px;color:var(--muted);font-weight:600;">${greeting()}</div>
+      <div style="font-size:18px;font-weight:800;">${dateStr}</div>
+    </div>
+
+    <div class="info-box" style="padding:16px;margin-top:12px;">
+      <div class="row-between" style="margin-bottom:8px;">
+        <span class="eyebrow-label" style="margin:0;">Week ${week.week} of 8 — ${LEVELS[state.activeLevel].label}</span>
+        <span class="mono" style="font-size:12px;color:var(--accent);font-weight:800;">${planPct}%</span>
+      </div>
+      <div class="progress-track" style="height:8px;margin-bottom:12px;"><div class="progress-fill" style="width:${planPct}%;"></div></div>
+      ${plannedDay ? `
+        <div class="row-between">
+          <div>
+            <div style="font-weight:800;font-size:16px;">${plannedDay.session}</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:2px;">${plannedDay.exercises.length} exercises${dayDone>0?` · ${dayDone}/${dayTotal} done`:''}</div>
+          </div>
+          <span class="phase-pill">${week.phaseLabel.split(' — ')[0]}</span>
+        </div>
+        <button class="btn btn-accent btn-block" data-home-day="${week.days.indexOf(plannedDay)}" style="margin-top:12px;">${dayDone>0 && dayDone<dayTotal ? 'Continue Workout' : dayDone===dayTotal ? 'View Completed Day' : "Start Today's Workout"}</button>
+      ` : `
+        <div style="font-weight:800;font-size:16px;">Rest Day</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px;">No session scheduled — recovery, mobility, or an easy walk.</div>
+      `}
+    </div>
+
+    <div class="grid2" style="margin-top:12px;">
+      <div class="stat-card"><div class="stat-label">Streak</div><div class="stat-value" style="color:var(--accent);">🔥 ${streak}<span class="stat-unit">days</span></div></div>
+      <div class="stat-card"><div class="stat-label">Weight</div><div class="stat-value" style="color:var(--steel);">${latestWeight?latestWeight.weight:state.profile.weight}<span class="stat-unit">kg</span></div></div>
+      <div class="stat-card"><div class="stat-label">Calories Today</div><div class="stat-value" style="color:var(--text);">${eaten}<span class="stat-unit">/ ${targets.kcal}</span></div></div>
+      <div class="stat-card"><div class="stat-label">Protein Today</div><div class="stat-value" style="color:var(--text);">${proteinToday}<span class="stat-unit">/ ${Math.round(targets.protein)}g</span></div></div>
+    </div>
+
+    <div class="eyebrow-label">This Week</div>
+    <div class="day-tabs" style="margin-bottom:16px;">
+      ${week.days.map((d,i)=>{
+        const pct = d.exercises.length ? Math.round(d.exercises.filter(ex=>state.completed[`${week.week}|${d.day}|${ex.name}`]).length/d.exercises.length*100) : 0;
+        return `<button class="day-tab ${pct===100?'active':''}" data-home-day="${i}" style="opacity:${pct===100?1:.85};">
+          <div class="dtop">${d.day.toUpperCase()}</div><div class="dbot">${pct===100?'✓ Done':pct>0?pct+'%':d.session.split(' ')[0]}</div>
+        </button>`;
+      }).join("")}
+    </div>
+
+    <div class="eyebrow-label">Quick Actions</div>
+    <div class="grid2" style="margin-bottom:8px;">
+      <button class="btn btn-steel" data-nav="workout" style="display:flex;align-items:center;justify-content:center;gap:8px;">${svg('workout',16)} Start Workout</button>
+      <button class="btn btn-steel" data-nav="body" style="display:flex;align-items:center;justify-content:center;gap:8px;">${svg('body',16)} Log Weight</button>
+      <button class="btn btn-steel" data-nav="nutrition" style="display:flex;align-items:center;justify-content:center;gap:8px;">${svg('nutrition',16)} Log Food</button>
+      <button class="btn btn-steel" data-nav="progress" style="display:flex;align-items:center;justify-content:center;gap:8px;">${svg('progress',16)} View Progress</button>
+    </div>
+  `;
+}
+
 
 function renderPlanTab(){
   const week = WEEKS[state.activeWeek-1];
@@ -1723,6 +1852,16 @@ function renderSettingsTab(){
 function attachHandlers(){
   document.querySelectorAll("[data-nav]").forEach(el=>{
     el.addEventListener("click", ()=>{ state.tab = el.dataset.nav; render(); });
+  });
+  document.querySelectorAll("[data-close-more]").forEach(el=>{
+    el.addEventListener("click", ()=>{ state.tab = "home"; render(); });
+  });
+  document.querySelectorAll("[data-home-day]").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      state.activeDayIdx = Number(el.dataset.homeDay);
+      state.tab = "plan";
+      render();
+    });
   });
 
   // Settings

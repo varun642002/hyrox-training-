@@ -123,6 +123,14 @@
   .nav-btn svg{width:19px; height:19px;}
   .nav-btn span{font-size:9px; font-weight:700;}
 
+  /* More sheet */
+  .more-sheet-backdrop{position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:60; display:flex; align-items:flex-end; justify-content:center;}
+  .more-sheet{width:100%; max-width:480px; background:var(--surface); border-radius:18px 18px 0 0; padding:10px 16px calc(16px + env(safe-area-inset-bottom,0px)); animation:sheetUp .18s ease-out;}
+  .more-sheet-handle{width:36px; height:4px; background:var(--border); border-radius:2px; margin:6px auto 10px;}
+  .more-sheet-item{display:flex; align-items:center; gap:14px; width:100%; background:var(--surface-alt); border:none; border-radius:12px; padding:12px 14px; margin-bottom:8px; cursor:pointer; color:var(--text);}
+  .more-sheet-icon{color:var(--steel); flex-shrink:0;}
+  @keyframes sheetUp{from{transform:translateY(24px); opacity:0;} to{transform:translateY(0); opacity:1;}}
+
   .history-row{background:var(--surface); border-radius:10px; padding:10px 14px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;}
   .history-row .del{color:#5c5c66; font-weight:700; font-size:12px; padding:0 4px; background:none; border:none;}
   .progress-track{flex:1; height:10px; border-radius:5px; overflow:hidden; background:var(--surface-alt);}
