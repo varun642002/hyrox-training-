@@ -56,50 +56,64 @@ const WEEKS = Array.from({length:8},(_,i)=>buildWeek(i+1));
 
 /* ---------- Exercise library ---------- */
 const LIBRARY = {
-  "Barbell":[["Back Squat","4x6","reps","Legs"],["Front Squat","4x6","reps","Legs"],["Deadlift","4x5","reps","Back"],
-    ["Romanian Deadlift","3x8","reps","Legs"],["Sumo Deadlift","4x5","reps","Legs"],["Bench Press","4x6","reps","Chest"],
+  "Barbell":[["Back Squat","4x6","reps","Quadriceps"],["Front Squat","4x6","reps","Quadriceps"],["Deadlift","4x5","reps","Hamstrings"],
+    ["Romanian Deadlift","3x8","reps","Hamstrings"],["Sumo Deadlift","4x5","reps","Glutes"],["Bench Press","4x6","reps","Chest"],
     ["Incline Bench Press","4x8","reps","Chest"],["Overhead Press","3x8","reps","Shoulders"],["Push Press","3x6","reps","Shoulders"],
-    ["Bent-Over Row","4x8","reps","Back"],["Barbell Curl","3x10","reps","Arms"],["Hip Thrust","3x10","reps","Legs"]],
-  "Dumbbell":[["DB Bench Press","4x8","reps","Chest"],["DB Row","4x10","reps","Back"],["DB Shoulder Press","3x10","reps","Shoulders"],
-    ["Goblet Squat","3x12","reps","Legs"],["Walking Lunges","3x12/leg","reps","Legs"],["Bulgarian Split Squat","3x10/leg","reps","Legs"],
-    ["Farmer's Carry","4x40m","distance","Core"],["DB Curl","3x12","reps","Arms"],["Lateral Raise","3x12","reps","Shoulders"],
-    ["DB RDL","3x10","reps","Legs"],["Renegade Row","3x8/side","reps","Back"]],
-  "Machine":[["Leg Press","4x10","reps","Legs"],["Hack Squat","4x10","reps","Legs"],["Leg Extension","3x12","reps","Legs"],
-    ["Leg Curl","3x12","reps","Legs"],["Lat Pulldown","4x10","reps","Back"],["Seated Cable Row","4x10","reps","Back"],
+    ["Bent-Over Row","4x8","reps","Lats"],["Barbell Curl","3x10","reps","Biceps"],["Hip Thrust","3x10","reps","Glutes"]],
+  "Dumbbell":[["DB Bench Press","4x8","reps","Chest"],["DB Row","4x10","reps","Lats"],["DB Shoulder Press","3x10","reps","Shoulders"],
+    ["Goblet Squat","3x12","reps","Quadriceps"],["Walking Lunges","3x12/leg","reps","Quadriceps"],["Bulgarian Split Squat","3x10/leg","reps","Quadriceps"],
+    ["Farmer's Carry","4x40m","distance","Forearms"],["DB Curl","3x12","reps","Biceps"],["Lateral Raise","3x12","reps","Shoulders"],
+    ["DB RDL","3x10","reps","Hamstrings"],["Renegade Row","3x8/side","reps","Lats"]],
+  "Machine":[["Leg Press","4x10","reps","Quadriceps"],["Hack Squat","4x10","reps","Quadriceps"],["Leg Extension","3x12","reps","Quadriceps"],
+    ["Leg Curl","3x12","reps","Hamstrings"],["Lat Pulldown","4x10","reps","Lats"],["Seated Cable Row","4x10","reps","Lats"],
     ["Chest Press Machine","4x10","reps","Chest"],["Shoulder Press Machine","3x10","reps","Shoulders"],["Pec Deck","3x12","reps","Chest"],
-    ["Cable Crossover","3x12","reps","Chest"],["Smith Machine Squat","4x8","reps","Legs"],["Assisted Pull-up","3x8","reps","Back"],
-    ["Assisted Dip","3x8","reps","Chest"],["Cable Tricep Pushdown","3x12","reps","Arms"],["Cable Face Pull","3x15","reps","Shoulders"],
-    ["Hip Abductor Machine","3x15","reps","Legs"],["Hip Adductor Machine","3x15","reps","Legs"],["Calf Raise Machine","4x15","reps","Legs"]],
-  "Bodyweight":[["Push-up","3x15","reps","Chest"],["Pull-up","3x8","reps","Back"],["Chin-up","3x8","reps","Back"],
-    ["Dip","3x10","reps","Chest"],["Plank","3x45s","time","Core"],["Sit-up","3x15","reps","Core"],["Air Squat","3x20","reps","Legs"],
-    ["Burpee","3x10","reps","Core"],["Mountain Climbers","3x30s","time","Core"],["Jump Squat","3x12","reps","Legs"],
-    ["Handstand Hold","3x20s","time","Shoulders"],["Pistol Squat","3x5/leg","reps","Legs"]],
+    ["Cable Crossover","3x12","reps","Chest"],["Smith Machine Squat","4x8","reps","Quadriceps"],["Assisted Pull-up","3x8","reps","Lats"],
+    ["Assisted Dip","3x8","reps","Triceps"],["Cable Tricep Pushdown","3x12","reps","Triceps"],["Cable Face Pull","3x15","reps","Traps"],
+    ["Hip Abductor Machine","3x15","reps","Abductors"],["Hip Adductor Machine","3x15","reps","Adductors"],["Calf Raise Machine","4x15","reps","Calves"]],
+  "Bodyweight":[["Push-up","3x15","reps","Chest"],["Pull-up","3x8","reps","Lats"],["Chin-up","3x8","reps","Biceps"],
+    ["Dip","3x10","reps","Triceps"],["Plank","3x45s","time","Abdominals"],["Sit-up","3x15","reps","Abdominals"],["Air Squat","3x20","reps","Quadriceps"],
+    ["Burpee","3x10","reps","Cardio"],["Mountain Climbers","3x30s","time","Abdominals"],["Jump Squat","3x12","reps","Quadriceps"],
+    ["Handstand Hold","3x20s","time","Shoulders"],["Pistol Squat","3x5/leg","reps","Quadriceps"]],
   "Cardio Machine":[["Treadmill","20 min","time","Cardio"],["Rowing Machine","2000m","distance","Cardio"],
     ["Ski Erg","1000m","distance","Cardio"],["Assault Bike","15 min","time","Cardio"],["Stationary Bike","30 min","time","Cardio"],
     ["Elliptical","25 min","time","Cardio"],["Stairmaster","20 min","time","Cardio"],["Jacob's Ladder","10 min","time","Cardio"]],
   "Cardio Outdoor":[["Running","5 km","distance","Cardio"],["Cycling","20 km","distance","Cardio"],["Swimming","1500m","distance","Cardio"],
     ["Walking","30 min","time","Cardio"],["Hiking","60 min","time","Cardio"],["Jump Rope","10 min","time","Cardio"]],
-  "Hyrox Station":[["Sled Push","4x25m","distance","Legs"],["Sled Pull","4x25m","distance","Back"],
-    ["Sandbag Lunges","4x25m","distance","Legs"],["Wall Balls","4x15","reps","Legs"],["Burpee Broad Jumps","4x10","reps","Core"],
-    ["Farmer's Carry (station)","4x200m","distance","Core"],["Ski Erg (station)","4x250m","distance","Cardio"],["Rowing (station)","4x250m","distance","Cardio"]],
+  "Hyrox Station":[["Sled Push","4x25m","distance","Quadriceps"],["Sled Pull","4x25m","distance","Lats"],
+    ["Sandbag Lunges","4x25m","distance","Quadriceps"],["Wall Balls","4x15","reps","Quadriceps"],["Burpee Broad Jumps","4x10","reps","Cardio"],
+    ["Farmer's Carry (station)","4x200m","distance","Forearms"],["Ski Erg (station)","4x250m","distance","Cardio"],["Rowing (station)","4x250m","distance","Cardio"]],
   "Mobility / Stretch":[["Hip Flexor Stretch","2x30s/side","time","Mobility"],["Couch Stretch","2x45s/side","time","Mobility"],
     ["Pigeon Pose","2x45s/side","time","Mobility"],["World's Greatest Stretch","2x5/side","reps","Mobility"],
     ["Thoracic Rotation","2x10/side","reps","Mobility"],["Shoulder Dislocate","2x10","reps","Mobility"],["Cat-Cow","2x10","reps","Mobility"],
     ["90/90 Hip Switch","2x8/side","reps","Mobility"],["Hamstring Stretch","2x30s/side","time","Mobility"],["Calf Stretch","2x30s/side","time","Mobility"],
     ["Ankle Circles","2x10/side","reps","Mobility"],["Foam Rolling — Quads","2 min/side","time","Mobility"],
-    ["Foam Rolling — Back","2 min","time","Mobility"],["Band Pull-Apart","3x15","reps","Shoulders"],["Deep Squat Hold","3x30s","time","Mobility"]]
+    ["Foam Rolling — Back","2 min","time","Mobility"],["Band Pull-Apart","3x15","reps","Traps"],["Deep Squat Hold","3x30s","time","Mobility"]]
 };
 
 // Names that appear only in the Hyrox 8-week Plan (slightly different wording than library entries)
 const PLAN_MUSCLE_MAP = {
-  "Back Squat":"Legs","Romanian Deadlift":"Legs","Walking Lunges":"Legs","Plank":"Core","Pallof Press":"Core",
-  "Warm-up":"Cardio","Intervals":"Cardio","Cool-down":"Cardio","Bench Press":"Chest","Bent-Over Row":"Back",
-  "Overhead Press":"Shoulders","Farmer's Carry":"Core","Hanging Leg Raise":"Core","Row / Ski / Run":"Cardio",
-  "Sled Push/Pull":"Legs","Wall Balls":"Legs","Burpee Broad Jumps":"Core","Ski Erg":"Cardio",
-  "Weighted Sit-Up":"Core","Walk / Mobility / Light Swim":"Mobility"
+  "Back Squat":"Quadriceps","Romanian Deadlift":"Hamstrings","Walking Lunges":"Quadriceps","Plank":"Abdominals","Pallof Press":"Abdominals",
+  "Warm-up":"Cardio","Intervals":"Cardio","Cool-down":"Cardio","Bench Press":"Chest","Bent-Over Row":"Lats",
+  "Overhead Press":"Shoulders","Farmer's Carry":"Forearms","Hanging Leg Raise":"Abdominals","Row / Ski / Run":"Cardio",
+  "Sled Push/Pull":"Quadriceps","Wall Balls":"Quadriceps","Burpee Broad Jumps":"Cardio","Ski Erg":"Cardio",
+  "Weighted Sit-Up":"Abdominals","Walk / Mobility / Light Swim":"Mobility"
 };
 
+// Fine-grained muscle categories shown in the Body Distribution table (order matches display order)
+const BODY_MUSCLES = ["Abdominals","Abductors","Adductors","Biceps","Calves","Cardio","Chest","Forearms",
+  "Glutes","Hamstrings","Lats","Quadriceps","Shoulders","Traps","Triceps"];
+
+// Broad grouping used only for the 6-axis radar chart
 const RADAR_MUSCLES = ["Back","Chest","Legs","Core","Arms","Shoulders"];
+const FINE_TO_BROAD = {
+  Lats:"Back", Traps:"Back",
+  Chest:"Chest",
+  Quadriceps:"Legs", Hamstrings:"Legs", Glutes:"Legs", Calves:"Legs", Abductors:"Legs", Adductors:"Legs",
+  Abdominals:"Core",
+  Biceps:"Arms", Triceps:"Arms", Forearms:"Arms",
+  Shoulders:"Shoulders"
+};
+
 
 function allLibraryExercises(){
   const custom = LS.get("hx_custom_exercises", []);
@@ -162,6 +176,8 @@ const state = {
   customExercises: LS.get("hx_custom_exercises",[]),
   workoutLog: LS.get("hx_workout_log",[]),
   foodLog: LS.get("hx_food_log",[]),
+  routines: LS.get("hx_routines",[]),
+  routineBuilder: null,
   restDuration: LS.get("hx_rest_duration",90),
   session: LS.get("hx_active_session", null),
   libCategory: "All",
@@ -169,6 +185,7 @@ const state = {
   showCustomForm: false,
   chartMetric: "sets",
   calendarMonthOffset: 0,
+  bodyDistWeekOffset: 0,
   timer: null
 };
 
@@ -181,6 +198,7 @@ function persist(){
   LS.set("hx_custom_exercises", state.customExercises);
   LS.set("hx_workout_log", state.workoutLog);
   LS.set("hx_food_log", state.foodLog);
+  LS.set("hx_routines", state.routines);
   LS.set("hx_rest_duration", state.restDuration);
   LS.set("hx_active_session", state.session);
 }
@@ -291,13 +309,54 @@ function sessionMuscles(exercises){
   return Array.from(set);
 }
 
+function renderRoutineBuilder(){
+  const b = state.routineBuilder;
+  return `<div class="info-box" style="padding:14px;margin-bottom:12px;">
+    <input type="text" id="routine-name" placeholder="Routine name (e.g. Leg Day 2)" value="${b.name}"
+      style="width:100%;background:var(--surface-alt);border-radius:8px;padding:10px;font-size:14px;color:var(--text);margin-bottom:10px;">
+
+    ${b.exercises.length? b.exercises.map((e,i)=>`<div class="history-row" style="margin-bottom:4px;">
+      <span style="font-size:13px;font-weight:600;">${e.name}</span>
+      <span class="mono" style="font-size:12px;color:var(--steel);">${e.sets} sets</span>
+      <button class="del" data-remove-builder-ex="${i}">${svg('x',12)}</button>
+    </div>`).join("") : ""}
+
+    <div style="display:flex;gap:6px;margin-top:${b.exercises.length?'10px':'0'};">
+      <select class="select-input" id="routine-ex-picker" style="margin-bottom:0;flex:1;">
+        <option value="">Choose an exercise…</option>
+        ${Object.entries(LIBRARY).map(([cat,items])=>`<optgroup label="${cat}">
+          ${items.map(([n])=>`<option value="${n}">${n}</option>`).join("")}
+        </optgroup>`).join("")}
+      </select>
+      <input type="number" id="routine-ex-sets" value="3" min="1" style="width:52px;background:var(--surface-alt);border-radius:8px;padding:9px;text-align:center;color:var(--accent);font-family:'SF Mono',monospace;font-weight:700;">
+    </div>
+    <button class="btn btn-ghost btn-block" data-action="add-builder-exercise" style="margin-top:8px;">${svg('plus',14)} Add Exercise</button>
+    <button class="btn btn-accent btn-block" data-action="save-routine" style="margin-top:10px;">Save Routine</button>
+  </div>`;
+}
+
 function renderWorkoutTab(){
   if(!state.session){
     const recent = state.workoutLog.slice(0,5);
     return `
-      <div class="eyebrow-label" style="margin-top:4px;">Start a Session</div>
-      <button class="btn btn-accent btn-block" data-action="start-session">${svg('plus',16)} New Workout</button>
-      <div class="eyebrow-label">Recent Sessions</div>
+      <button class="btn btn-accent btn-block" data-action="start-session" style="margin-top:4px;">${svg('plus',16)} Start Empty Workout</button>
+
+      <div class="row-between" style="margin:18px 0 8px;">
+        <span class="eyebrow-label" style="margin:0;">Routines</span>
+        <button class="btn btn-ghost" data-action="toggle-routine-builder" style="padding:6px 12px;font-size:12px;">${state.routineBuilder? 'Cancel' : svg('plus',13)+' New Routine'}</button>
+      </div>
+      ${state.routineBuilder ? renderRoutineBuilder() : ""}
+      ${state.routines.length===0 && !state.routineBuilder ? `<div class="empty-note">No routines saved yet.</div>` :
+        state.routines.map(r=>`<div class="routine-card">
+          <div class="row-between">
+            <span style="font-weight:800;font-size:15px;">${r.name}</span>
+            <button class="del" data-del-routine="${r.id}">${svg('x',14)}</button>
+          </div>
+          <div style="font-size:12px;color:var(--muted);margin:6px 0 12px;">${r.exercises.map(e=>e.name).join(", ")}</div>
+          <button class="btn btn-steel btn-block" data-start-routine="${r.id}">Start Routine</button>
+        </div>`).join("")}
+
+      <div class="eyebrow-label" style="margin-top:20px;">Recent Sessions</div>
       ${recent.length===0?`<div class="empty-note">No sessions logged yet.</div>`:
         recent.map(s=>{
           const muscles = sessionMuscles(s.exercises);
@@ -450,7 +509,7 @@ function customExerciseForm(){
       ${Object.keys(LIBRARY).map(c=>`<option value="${c}">${c}</option>`).join("")}
     </select>
     <select class="select-input" id="custom-muscle">
-      ${[...RADAR_MUSCLES,"Cardio","Mobility","Other"].map(m=>`<option value="${m}">${m}</option>`).join("")}
+      ${[...BODY_MUSCLES,"Mobility","Other"].map(m=>`<option value="${m}">${m}</option>`).join("")}
     </select>
     <input type="text" id="custom-presc" placeholder="Default prescription (e.g. 3x12)" style="background:var(--surface-alt);border-radius:8px;padding:10px;width:100%;margin-bottom:8px;font-size:14px;color:var(--text);">
     <button class="btn btn-accent btn-block" data-action="save-custom">Save Exercise</button>
@@ -611,21 +670,98 @@ function computeMuscleDistribution(daysBack, offsetDays){
   Object.entries(state.completed).forEach(([key, ts])=>{
     if(ts < start || ts > end) return;
     const [wk,,exName] = key.split("|");
-    const muscle = getMuscle(exName);
-    if(RADAR_MUSCLES.includes(muscle)){
+    const broad = FINE_TO_BROAD[getMuscle(exName)];
+    if(broad){
       const presc = getPlanPresc(Number(wk), key.split("|")[1], exName);
-      counts[muscle] += parseSets(presc);
+      counts[broad] += parseSets(presc);
     }
   });
   state.workoutLog.forEach(s=>{
     const t = new Date(s.date).getTime();
     if(t < start || t > end) return;
     s.exercises.forEach(ex=>{
-      const muscle = getMuscle(ex.name);
-      if(RADAR_MUSCLES.includes(muscle)) counts[muscle] += ex.sets.length;
+      const broad = FINE_TO_BROAD[getMuscle(ex.name)];
+      if(broad) counts[broad] += ex.sets.length;
     });
   });
   return counts;
+}
+
+// Fine-grained per-muscle set counts within [startTs, endTs), for the Body Distribution table
+function computeMuscleDistributionFine(startTs, endTs){
+  const counts = {}; BODY_MUSCLES.forEach(m=> counts[m]=0);
+  Object.entries(state.completed).forEach(([key, ts])=>{
+    if(ts < startTs || ts >= endTs) return;
+    const [wk,day,exName] = key.split("|");
+    const muscle = getMuscle(exName);
+    if(counts.hasOwnProperty(muscle)){
+      const presc = getPlanPresc(Number(wk), day, exName);
+      counts[muscle] += parseSets(presc);
+    }
+  });
+  state.workoutLog.forEach(s=>{
+    const t = new Date(s.date).getTime();
+    if(t < startTs || t >= endTs) return;
+    s.exercises.forEach(ex=>{
+      const muscle = getMuscle(ex.name);
+      if(counts.hasOwnProperty(muscle)) counts[muscle] += ex.sets.length;
+    });
+  });
+  return counts;
+}
+
+/* Monday-start week boundaries for a given offset (0 = current week, 1 = last week, ...) */
+function weekRange(weekOffset){
+  const now = new Date();
+  const day = (now.getDay()+6)%7; // Mon=0
+  const monday = new Date(now); monday.setHours(0,0,0,0); monday.setDate(now.getDate()-day-7*weekOffset);
+  const sunday = new Date(monday); sunday.setDate(monday.getDate()+7);
+  return { start: monday, end: sunday };
+}
+
+function renderBodyDistribution(weekOffset){
+  const { start, end } = weekRange(weekOffset);
+  const dates = activityDates();
+  const todayStr0 = new Date().toISOString().slice(0,10);
+  const dayLabels = ["M","T","W","T","F","S","S"];
+  let strip = "";
+  for(let i=0;i<7;i++){
+    const d = new Date(start); d.setDate(start.getDate()+i);
+    const dStr = d.toISOString().slice(0,10);
+    const active = dates.has(dStr);
+    const isToday = dStr===todayStr0;
+    strip += `<div style="display:flex;flex-direction:column;align-items:center;gap:5px;">
+      <span style="font-size:10px;color:var(--muted);font-weight:700;">${dayLabels[i]}</span>
+      <div style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+        font-size:12px;font-weight:800;font-family:'SF Mono',monospace;
+        background:${active?'var(--accent)':'transparent'};
+        color:${active?'#151515':'var(--muted)'};
+        ${isToday && !active?'box-shadow:inset 0 0 0 1.5px var(--steel);color:var(--steel);':''}">${d.getDate()}</div>
+    </div>`;
+  }
+  const rangeLabel = `${start.toLocaleDateString('default',{day:'2-digit',month:'short'})} – ${new Date(end.getTime()-86400000).toLocaleDateString('default',{day:'2-digit',month:'short',year:'numeric'})}`;
+
+  const counts = computeMuscleDistributionFine(start.getTime(), end.getTime());
+  const totalSets = Object.values(counts).reduce((a,b)=>a+b,0);
+
+  return `
+    <div class="row-between" style="margin-bottom:12px;">
+      <button class="btn btn-ghost" data-bodydist-nav="1" style="padding:6px 12px;">‹</button>
+      <span class="mono" style="font-size:12px;font-weight:700;color:var(--text);">${rangeLabel}</span>
+      <button class="btn btn-ghost" data-bodydist-nav="-1" style="padding:6px 12px;" ${weekOffset<=0?'disabled':''}>›</button>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:18px;">${strip}</div>
+    <div style="display:flex;justify-content:space-between;padding:8px 2px;border-bottom:1px solid var(--border);font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;">
+      <span>Muscle</span><span>Sets</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;padding:10px 2px;border-bottom:1px solid var(--border);">
+      <span style="font-weight:800;font-size:14px;">Total</span><span class="mono" style="font-weight:800;color:var(--accent);">${totalSets}</span>
+    </div>
+    ${BODY_MUSCLES.map(m=>`<div style="display:flex;justify-content:space-between;padding:9px 2px;border-bottom:1px solid var(--border);">
+      <span style="font-size:13px;color:${counts[m]>0?'var(--text)':'var(--muted)'};">${m}</span>
+      <span class="mono" style="font-size:13px;color:${counts[m]>0?'var(--steel)':'var(--muted)'};">${counts[m]}</span>
+    </div>`).join("")}
+  `;
 }
 
 function computeWeeklyActivity(weeks=8){
@@ -784,6 +920,11 @@ function renderProgressTab(){
       </div>
     </div>
 
+    <div class="eyebrow-label">Body Distribution</div>
+    <div class="info-box" style="padding:14px;">
+      ${renderBodyDistribution(state.bodyDistWeekOffset||0)}
+    </div>
+
     <div class="eyebrow-label">Calendar</div>
     <div class="info-box" style="padding:14px;">
       ${renderCalendarMonth(state.calendarMonthOffset||0)}
@@ -832,6 +973,61 @@ function attachHandlers(){
   if(startBtn) startBtn.addEventListener("click", ()=>{
     state.session = { startedAt: Date.now(), exercises: [] };
     render();
+  });
+
+  // Routines
+  const toggleBuilderBtn = document.querySelector('[data-action="toggle-routine-builder"]');
+  if(toggleBuilderBtn) toggleBuilderBtn.addEventListener("click", ()=>{
+    state.routineBuilder = state.routineBuilder ? null : { name:"", exercises:[] };
+    render();
+  });
+  const addBuilderExBtn = document.querySelector('[data-action="add-builder-exercise"]');
+  if(addBuilderExBtn) addBuilderExBtn.addEventListener("click", ()=>{
+    const nameEl = document.getElementById("routine-name");
+    if(nameEl) state.routineBuilder.name = nameEl.value;
+    const picker = document.getElementById("routine-ex-picker");
+    const setsEl = document.getElementById("routine-ex-sets");
+    if(picker && picker.value){
+      state.routineBuilder.exercises.push({ name: picker.value, sets: Math.max(1, Number(setsEl.value)||3) });
+      render();
+    }
+  });
+  document.querySelectorAll("[data-remove-builder-ex]").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      const nameEl = document.getElementById("routine-name");
+      if(nameEl) state.routineBuilder.name = nameEl.value;
+      state.routineBuilder.exercises.splice(Number(el.dataset.removeBuilderEx),1);
+      render();
+    });
+  });
+  const saveRoutineBtn = document.querySelector('[data-action="save-routine"]');
+  if(saveRoutineBtn) saveRoutineBtn.addEventListener("click", ()=>{
+    const nameEl = document.getElementById("routine-name");
+    const name = nameEl ? nameEl.value.trim() : "";
+    if(!name || !state.routineBuilder.exercises.length) return;
+    state.routines.unshift({ id: Date.now(), name, exercises: state.routineBuilder.exercises });
+    state.routineBuilder = null;
+    render();
+  });
+  document.querySelectorAll("[data-del-routine]").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      state.routines = state.routines.filter(r=>r.id !== Number(el.dataset.delRoutine));
+      render();
+    });
+  });
+  document.querySelectorAll("[data-start-routine]").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      const routine = state.routines.find(r=>r.id === Number(el.dataset.startRoutine));
+      if(!routine) return;
+      state.session = {
+        startedAt: Date.now(),
+        exercises: routine.exercises.map(e=>({
+          name: e.name, notes:"", restDuration:0,
+          sets: Array.from({length:e.sets}, ()=>({weight:"",reps:"",rpe:"",done:false}))
+        }))
+      };
+      render();
+    });
   });
   const finishBtn = document.querySelector('[data-action="finish-session"]');
   if(finishBtn) finishBtn.addEventListener("click", ()=>{
@@ -1001,6 +1197,14 @@ function attachHandlers(){
       const delta = Number(el.dataset.calNav);
       const next = (state.calendarMonthOffset||0) + delta;
       if(next<=0) state.calendarMonthOffset = next;
+      render();
+    });
+  });
+  document.querySelectorAll("[data-bodydist-nav]").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      const delta = Number(el.dataset.bodydistNav);
+      const next = (state.bodyDistWeekOffset||0) + delta;
+      if(next>=0) state.bodyDistWeekOffset = next;
       render();
     });
   });
