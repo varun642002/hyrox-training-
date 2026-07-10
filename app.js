@@ -3,6 +3,9 @@
    Single-file app logic. No external dependencies.
 ========================================================= */
 
+/* ---------- Schema versioning ---------- */
+const SCHEMA_VERSION = 1; // bump when localStorage shape changes; add a migrate() step below
+
 /* ---------- Storage ---------- */
 const LS = {
   get(key, fallback) {
@@ -263,9 +266,38 @@ function persist(){
   LS.set("hx_settings", state.settings);
   LS.set("hx_rest_duration", state.restDuration);
   LS.set("hx_active_session", state.session);
+  LS.set("hx_schema_version", SCHEMA_VERSION);
+}
+
+/* ---------- Migration: runs once on boot if stored schema is older than current ---------- */
+function runMigrations(){
+  const stored = LS.get("hx_schema_version", null);
+  if(stored===null){
+    // Pre-versioning install (or brand new) — just stamp current version, no data shape to migrate
+    LS.set("hx_schema_version", SCHEMA_VERSION);
+    return;
+  }
+  if(stored > SCHEMA_VERSION){
+    console.warn("Ignyt: backup/data is from a newer app version ("+stored+" > "+SCHEMA_VERSION+"). Some fields may be ignored.");
+    return;
+  }
+  // Example future migration:
+  // if(stored < 2){ /* transform old shape -> new shape here */ LS.set("hx_schema_version", 2); }
+  if(stored < SCHEMA_VERSION){
+    LS.set("hx_schema_version", SCHEMA_VERSION);
+  }
 }
 
 function render(){
+  try{
+    renderApp();
+  }catch(err){
+    console.error("Ignyt render error:", err);
+    renderErrorScreen(err);
+  }
+}
+
+function renderApp(){
   const root = document.getElementById("app");
   const MORE_TABS = ["library","body","nutrition","settings"];
   const isMoreActive = MORE_TABS.includes(state.tab) || state.tab==="more";
@@ -300,6 +332,43 @@ function render(){
   if(state.tab==="more") main.innerHTML = ""; // sheet covers it
   attachHandlers();
   persist();
+}
+
+/* Fallback UI so a runtime error never leaves a blank screen. Self-contained —
+   doesn't rely on attachHandlers() or any state that may itself be broken. */
+function renderErrorScreen(err){
+  const root = document.getElementById("app");
+  let msg = "Something went wrong displaying this screen.";
+  try{ msg = (err && err.message) ? err.message : msg; }catch{}
+  root.innerHTML = `
+    <div style="padding:24px 20px;max-width:480px;margin:0 auto;">
+      <div style="font-size:38px;margin-bottom:8px;">⚠️</div>
+      <h1 style="font-size:20px;font-weight:900;margin-bottom:6px;">Ignyt hit a snag</h1>
+      <p style="font-size:13px;color:var(--muted,#9a9aa4);margin-bottom:18px;">
+        A screen failed to load. Your saved data is safe — it lives in this browser's storage, untouched.
+      </p>
+      <div style="background:#1c1c22;border-radius:10px;padding:10px 12px;font-family:monospace;font-size:11px;color:#ff8a5c;margin-bottom:20px;word-break:break-word;">${msg.replace(/</g,"&lt;")}</div>
+      <button id="err-reload" style="width:100%;padding:13px;border:none;border-radius:10px;background:#FF5A1F;color:#fff;font-weight:800;font-size:14px;margin-bottom:10px;">Reload App</button>
+      <button id="err-home" style="width:100%;padding:13px;border:none;border-radius:10px;background:#2a2a32;color:#fff;font-weight:700;font-size:14px;margin-bottom:10px;">Go to Home</button>
+      <button id="err-backup" style="width:100%;padding:13px;border:none;border-radius:10px;background:#2a2a32;color:#fff;font-weight:700;font-size:14px;margin-bottom:10px;">Download Backup Now</button>
+      <button id="err-reset" style="width:100%;padding:13px;border:1px solid #ff6b6b;border-radius:10px;background:none;color:#ff6b6b;font-weight:700;font-size:13px;">Reset All App Data</button>
+    </div>
+  `;
+  document.getElementById("err-reload").addEventListener("click", ()=> location.reload());
+  document.getElementById("err-home").addEventListener("click", ()=>{
+    try{ state.tab = "home"; render(); }
+    catch{ location.reload(); }
+  });
+  document.getElementById("err-backup").addEventListener("click", ()=>{
+    try{ exportAllJSON(); }
+    catch{ alert("Backup failed too — try Reload first."); }
+  });
+  document.getElementById("err-reset").addEventListener("click", ()=>{
+    if(confirm("This permanently deletes ALL app data. Are you sure?") && confirm("Last check — this cannot be undone. Delete everything?")){
+      ALL_DATA_KEYS.forEach(k=>localStorage.removeItem(k));
+      location.reload();
+    }
+  });
 }
 
 function renderMoreSheet(){
@@ -1706,11 +1775,11 @@ function renderProgressTab(){
 /* =========================================================
    SETTINGS TAB — export/import + workout settings
 ========================================================= */
-const ALL_DATA_KEYS = ["hx_completed","hx_active_week","hx_nutrition","hx_bodylog","hx_custom_exercises",
-  "hx_workout_log","hx_food_log","hx_routines","hx_calc","hx_settings","hx_rest_duration","hx_tab"];
+const ALL_DATA_KEYS = ["hx_completed","hx_active_week","hx_active_level","hx_profile","hx_nutrition","hx_bodylog","hx_custom_exercises",
+  "hx_workout_log","hx_food_log","hx_routines","hx_calc","hx_settings","hx_rest_duration","hx_active_session","hx_tab","hx_schema_version"];
 
 function exportAllJSON(){
-  const data = { app:"ignyt", version:1, exportedAt:new Date().toISOString(), data:{} };
+  const data = { app:"ignyt", version:1, schemaVersion:SCHEMA_VERSION, exportedAt:new Date().toISOString(), data:{} };
   ALL_DATA_KEYS.forEach(k=>{ const v = localStorage.getItem(k); if(v!==null) data.data[k]=v; });
   downloadFile("ignyt-backup-"+todayStr()+".json", JSON.stringify(data,null,2), "application/json");
 }
@@ -1757,21 +1826,39 @@ function downloadFile(filename, content, mime){
 function importAllJSON(file){
   const reader = new FileReader();
   reader.onload = ()=>{
+    let parsed;
     try{
-      const parsed = JSON.parse(reader.result);
-      if(!parsed || (parsed.app!=="ignyt" && parsed.app!=="hyrox-prep") || !parsed.data){
-        alert("This doesn't look like an Ignyt backup file.");
-        return;
-      }
-      if(!confirm("Import will REPLACE all current app data with the backup. Continue?")) return;
-      Object.entries(parsed.data).forEach(([k,v])=>{
-        if(ALL_DATA_KEYS.includes(k)) localStorage.setItem(k, v);
-      });
-      location.reload();
+      parsed = JSON.parse(reader.result);
     }catch(e){
-      alert("Could not read that file — is it a valid backup JSON?");
+      alert("Could not read that file — it isn't valid JSON.");
+      return;
     }
+    if(!parsed || typeof parsed!=="object" || (parsed.app!=="ignyt" && parsed.app!=="hyrox-prep") || !parsed.data || typeof parsed.data!=="object"){
+      alert("This doesn't look like an Ignyt backup file.");
+      return;
+    }
+    // Validate every value is well-formed JSON before writing anything (all-or-nothing import)
+    const staged = {};
+    const badKeys = [];
+    Object.entries(parsed.data).forEach(([k,v])=>{
+      if(!ALL_DATA_KEYS.includes(k)) return; // ignore unknown/future keys rather than failing
+      try{ JSON.parse(v); staged[k] = v; }
+      catch(e){ badKeys.push(k); }
+    });
+    if(badKeys.length){
+      alert("This backup file is corrupted (bad data for: "+badKeys.join(", ")+"). Nothing was changed.");
+      return;
+    }
+    if(Object.keys(staged).length===0){
+      alert("This backup file has no recognizable Ignyt data. Nothing was changed.");
+      return;
+    }
+    if(!confirm("Import will REPLACE all current app data with this backup ("+new Date(parsed.exportedAt||Date.now()).toLocaleDateString()+"). Continue?")) return;
+    // Everything validated — commit atomically
+    Object.entries(staged).forEach(([k,v])=> localStorage.setItem(k, v));
+    location.reload();
   };
+  reader.onerror = ()=> alert("Could not read that file.");
   reader.readAsText(file);
 }
 
@@ -2318,8 +2405,27 @@ function attachHandlers(){
 /* =========================================================
    BOOTSTRAP
 ========================================================= */
+runMigrations();
 rebuildWeeks();
-render();
+
+// Global safety net: catches errors thrown outside render() (e.g. inside an
+// event handler before it calls render again). Never worse than the blank
+// screen the browser default would leave, so only intervene if #app is empty.
+window.addEventListener("error", (e)=>{
+  console.error("Ignyt uncaught error:", e.error||e.message);
+  const root = document.getElementById("app");
+  if(root && root.innerHTML.trim()==="") renderErrorScreen(e.error||new Error(e.message||"Unknown error"));
+});
+window.addEventListener("unhandledrejection", (e)=>{
+  console.error("Ignyt unhandled promise rejection:", e.reason);
+});
+
+try{
+  render();
+}catch(err){
+  console.error("Ignyt failed to boot:", err);
+  renderErrorScreen(err);
+}
 
 if("serviceWorker" in navigator){
   window.addEventListener("load", ()=>{
