@@ -159,7 +159,8 @@ const ICONS = {
   progress:'<path d="M4 20V10M11 20V4M18 20v-7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>',
   check:'<path d="M4 12l5 5L20 6" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
   x:'<path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>',
-  plus:'<path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>'
+  plus:'<path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>',
+  gear:'<circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2.8v3M12 18.2v3M2.8 12h3M18.2 12h3M5.5 5.5l2.1 2.1M16.4 16.4l2.1 2.1M18.5 5.5l-2.1 2.1M7.6 16.4l-2.1 2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'
 };
 function svg(name, size=19){ return `<svg width="${size}" height="${size}" viewBox="0 0 24 24">${ICONS[name]}</svg>`; }
 
@@ -178,6 +179,16 @@ const state = {
   foodLog: LS.get("hx_food_log",[]),
   routines: LS.get("hx_routines",[]),
   routineBuilder: null,
+  calc: LS.get("hx_calc", {
+    activeCalc:"bmr", age:25, gender:"male", height:180, weight:101,
+    neck:38, waist:90, hip:95, restingHR:60, activityMultiplier:1.465, result:null,
+    goalDelta:0, bust:90, bwaist:75, highHip:85, bhip:95
+  }),
+  settings: LS.get("hx_settings", {
+    sounds:true, vibration:true, defaultRest:90, keepAwake:false,
+    plateCalc:true, rpeTracking:true, autoStartRest:true
+  }),
+  plateCalcOpen: null, // element id string when plate calc popover open
   restDuration: LS.get("hx_rest_duration",90),
   session: LS.get("hx_active_session", null),
   libCategory: "All",
@@ -199,6 +210,8 @@ function persist(){
   LS.set("hx_workout_log", state.workoutLog);
   LS.set("hx_food_log", state.foodLog);
   LS.set("hx_routines", state.routines);
+  LS.set("hx_calc", state.calc);
+  LS.set("hx_settings", state.settings);
   LS.set("hx_rest_duration", state.restDuration);
   LS.set("hx_active_session", state.session);
 }
@@ -206,9 +219,12 @@ function persist(){
 function render(){
   const root = document.getElementById("app");
   root.innerHTML = `
-    <header class="app-header">
-      <div class="eyebrow-row"><div class="eyebrow-dash"></div><span class="eyebrow">Full Training System</span></div>
-      <h1 class="title">HYROX PREP</h1>
+    <header class="app-header" style="display:flex;align-items:flex-end;justify-content:space-between;">
+      <div>
+        <div class="eyebrow-row"><div class="eyebrow-dash"></div><span class="eyebrow">Full Training System</span></div>
+        <h1 class="title">HYROX PREP</h1>
+      </div>
+      <button data-nav="settings" style="background:${state.tab==='settings'?'var(--surface-alt)':'none'};border:none;color:${state.tab==='settings'?'var(--accent)':'var(--muted)'};padding:8px;border-radius:10px;cursor:pointer;">${svg('gear',22)}</button>
     </header>
     <main id="main"></main>
     ${renderTimerOverlay()}
@@ -228,6 +244,7 @@ function render(){
   if(state.tab==="body") main.innerHTML = renderBodyTab();
   if(state.tab==="nutrition") main.innerHTML = renderNutritionTab();
   if(state.tab==="progress") main.innerHTML = renderProgressTab();
+  if(state.tab==="settings") main.innerHTML = renderSettingsTab();
   attachHandlers();
   persist();
 }
@@ -396,6 +413,10 @@ function renderWorkoutTab(){
       s.exercises.map((ex,exi)=>{
         const muscle = getMuscle(ex.name);
         const restLabel = ex.restDuration ? `${ex.restDuration}s` : "OFF";
+        const showRPE = state.settings.rpeTracking;
+        const isBarbell = (LIBRARY["Barbell"]||[]).some(i=>i[0]===ex.name);
+        const showPlates = state.settings.plateCalc && isBarbell;
+        const gridCols = showRPE ? "24px 1fr 52px 52px 44px 32px" : "24px 1fr 62px 62px 32px";
         return `
         <div class="ex-log-card">
           <div class="row-between" style="margin-bottom:4px;">
@@ -406,20 +427,24 @@ function renderWorkoutTab(){
             <button class="del" data-del-exercise="${exi}">${svg('x',15)}</button>
           </div>
           <input type="text" class="notes-inline" placeholder="Add notes here…" value="${ex.notes||''}" data-notes-exercise="${exi}">
-          <button class="rest-toggle" data-rest-toggle="${exi}">${svg('workout',13)} Rest Timer: ${restLabel}</button>
+          <div class="row-between">
+            <button class="rest-toggle" data-rest-toggle="${exi}">${svg('workout',13)} Rest Timer: ${restLabel}</button>
+            ${showPlates?`<button class="rest-toggle" data-plate-calc="${exi}" style="color:var(--accent);">Plates</button>`:""}
+          </div>
+          ${state.plateCalcOpen===String(exi) ? renderPlatePopover(exi) : ""}
 
-          <div class="set-table-header">
-            <span>SET</span><span>PREVIOUS</span><span>KG</span><span>REPS</span><span>RPE</span><span></span>
+          <div class="set-table-header" style="grid-template-columns:${gridCols};">
+            <span>SET</span><span>PREVIOUS</span><span>KG</span><span>REPS</span>${showRPE?"<span>RPE</span>":""}<span></span>
           </div>
           ${ex.sets.map((set,si)=>{
             const prev = getPreviousSet(ex.name, si);
             const prevLabel = prev ? `${prev.weight||'–'}kg × ${prev.reps||'–'}` : "–";
-            return `<div class="set-row ${set.done?'done':''}">
+            return `<div class="set-row ${set.done?'done':''}" style="grid-template-columns:${gridCols};">
               <span class="mono set-num">${si+1}</span>
               <span class="mono set-prev">${prevLabel}</span>
               <input type="number" class="mono set-input" value="${set.weight}" data-set-field="${exi}|${si}|weight" placeholder="–">
               <input type="text" class="mono set-input" value="${set.reps}" data-set-field="${exi}|${si}|reps" placeholder="–">
-              <button class="rpe-btn" data-rpe="${exi}|${si}">${set.rpe||'RPE'}</button>
+              ${showRPE?`<button class="rpe-btn" data-rpe="${exi}|${si}">${set.rpe||'RPE'}</button>`:""}
               <button class="set-check ${set.done?'done':''}" data-set-done="${exi}|${si}">${set.done?svg('check',13):''}</button>
             </div>`;
           }).join("")}
@@ -427,6 +452,30 @@ function renderWorkoutTab(){
         </div>
       `;}).join("")}
   `;
+}
+
+function renderPlatePopover(exi){
+  const target = Number(state.plateTarget||0);
+  const bar = Number(state.plateBar||20);
+  const res = calcPlates(target, bar);
+  return `<div class="info-box" style="padding:12px;margin-bottom:10px;">
+    <div style="display:flex;gap:6px;margin-bottom:8px;">
+      <div style="flex:1;"><label style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);">Target (kg)</label>
+        <input type="number" id="plate-target" value="${target||''}" placeholder="100" style="display:block;width:100%;background:var(--surface-alt);border-radius:8px;padding:8px;margin-top:4px;font-family:'SF Mono',monospace;font-weight:700;color:var(--accent);"></div>
+      <div style="width:90px;"><label style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);">Bar (kg)</label>
+        <select class="select-input" id="plate-bar" style="margin:4px 0 0;padding:8px;">
+          ${[20,15,10,7.5].map(b=>`<option value="${b}" ${bar===b?'selected':''}>${b}</option>`).join("")}
+        </select></div>
+    </div>
+    <button class="btn btn-steel btn-block" data-action="run-plate-calc">Calculate Plates</button>
+    ${target>0 ? (res.perSide.length ?
+      `<div style="margin-top:10px;text-align:center;">
+        <div class="stat-label">Per Side</div>
+        <div class="mono" style="font-weight:900;font-size:16px;color:var(--text);margin-top:4px;">${res.perSide.map(p=>`${p.count}×${p.plate}kg`).join("  +  ")}</div>
+        ${res.remainder>0.01?`<div style="font-size:11px;color:var(--accent);margin-top:4px;">${res.remainder.toFixed(2)}kg/side can't be made with standard plates</div>`:""}
+      </div>`
+      : `<div style="font-size:12px;color:var(--muted);margin-top:8px;text-align:center;">Target must be heavier than the bar.</div>`) : ""}
+  </div>`;
 }
 
 /* =========================================================
@@ -461,6 +510,7 @@ function startTimer(seconds){
   },1000);
 }
 function playBeep(){
+  if(!state.settings.sounds) return;
   try{
     const ctx = new (window.AudioContext||window.webkitAudioContext)();
     for(let i=0;i<3;i++){
@@ -474,7 +524,23 @@ function playBeep(){
     }
   }catch{}
 }
-function vibrate(ms=200){ try{ navigator.vibrate && navigator.vibrate(ms); }catch{} }
+function vibrate(ms=200){ if(!state.settings.vibration) return; try{ navigator.vibrate && navigator.vibrate(ms); }catch{} }
+
+/* Wake lock — keeps screen on during an active session when enabled */
+let wakeLockHandle = null;
+async function applyWakeLock(){
+  try{
+    const shouldHold = state.settings.keepAwake && !!state.session;
+    if(shouldHold && !wakeLockHandle && "wakeLock" in navigator){
+      wakeLockHandle = await navigator.wakeLock.request("screen");
+      wakeLockHandle.addEventListener("release", ()=>{ wakeLockHandle = null; });
+    } else if(!shouldHold && wakeLockHandle){
+      await wakeLockHandle.release();
+      wakeLockHandle = null;
+    }
+  }catch{ wakeLockHandle = null; }
+}
+document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible") applyWakeLock(); });
 
 /* =========================================================
    LIBRARY TAB
@@ -519,6 +585,338 @@ function customExerciseForm(){
 /* =========================================================
    BODY TAB
 ========================================================= */
+/* =========================================================
+   FITNESS CALCULATORS — BMR, TDEE, LBM, Ideal Weight, Body Fat, HR Zones
+========================================================= */
+function calcBMR(age, gender, heightCm, weightKg){
+  // Mifflin-St Jeor
+  const base = 10*weightKg + 6.25*heightCm - 5*age;
+  return gender==="male" ? base+5 : base-161;
+}
+
+const ACTIVITY_MULTIPLIERS = [
+  {key:"bmr", label:"Basal Metabolic Rate (BMR)", mult:1},
+  {key:"sedentary", label:"Little or no exercise", mult:1.2},
+  {key:"light", label:"Exercise 1-3 times/week", mult:1.375},
+  {key:"moderate", label:"Exercise 4-5 times/week", mult:1.465},
+  {key:"active", label:"Daily exercise or intense 3-4x/week", mult:1.55},
+  {key:"veryactive", label:"Intense exercise 6-7 times/week", mult:1.725},
+  {key:"extra", label:"Very intense daily, or physical job", mult:1.9}
+];
+
+function calcLBM(gender, heightCm, weightKg){
+  const boer = gender==="male"
+    ? 0.407*weightKg + 0.267*heightCm - 19.2
+    : 0.252*weightKg + 0.473*heightCm - 48.3;
+  const hume = gender==="male"
+    ? 0.3281*weightKg + 0.33929*heightCm - 29.5336
+    : 0.29569*weightKg + 0.41813*heightCm - 43.2933;
+  return { boer, hume };
+}
+
+function calcIdealWeight(gender, heightCm){
+  const inchesOver5ft = Math.max(0, (heightCm/2.54) - 60);
+  const table = gender==="male"
+    ? { Robinson:52+1.9*inchesOver5ft, Miller:56.2+1.41*inchesOver5ft, Devine:50+2.3*inchesOver5ft, Hamwi:48+2.7*inchesOver5ft }
+    : { Robinson:49+1.7*inchesOver5ft, Miller:53.1+1.36*inchesOver5ft, Devine:45.5+2.3*inchesOver5ft, Hamwi:45.5+2.2*inchesOver5ft };
+  return table;
+}
+
+function calcBodyFatNavy(gender, heightCm, neckCm, waistCm, hipCm){
+  if(gender==="male"){
+    return 495/(1.0324 - 0.19077*Math.log10(waistCm-neckCm) + 0.15456*Math.log10(heightCm)) - 450;
+  }
+  return 495/(1.29579 - 0.35004*Math.log10(waistCm+(hipCm||0)-neckCm) + 0.22100*Math.log10(heightCm)) - 450;
+}
+
+function calcHeartRateZones(age, restingHR){
+  const maxHR = 220-age;
+  const zones = [
+    {label:"50-60% (Very Light)", lo:0.5, hi:0.6},
+    {label:"60-70% (Light)", lo:0.6, hi:0.7},
+    {label:"70-80% (Moderate)", lo:0.7, hi:0.8},
+    {label:"80-90% (Hard)", lo:0.8, hi:0.9},
+    {label:"90-100% (Maximum)", lo:0.9, hi:1.0}
+  ];
+  const useKarvonen = restingHR && restingHR>0;
+  const rows = zones.map(z=>{
+    if(useKarvonen){
+      const lo = Math.round((maxHR-restingHR)*z.lo + restingHR);
+      const hi = Math.round((maxHR-restingHR)*z.hi + restingHR);
+      return {label:z.label, lo, hi};
+    }
+    return {label:z.label, lo:Math.round(maxHR*z.lo), hi:Math.round(maxHR*z.hi)};
+  });
+  return { maxHR, rows, useKarvonen };
+}
+
+const CALCULATORS = [
+  {key:"bmr", label:"BMR"},
+  {key:"calorie", label:"Calories / TDEE (with goal)"},
+  {key:"protein", label:"Protein Intake"},
+  {key:"carbs", label:"Carbohydrate Intake"},
+  {key:"fat", label:"Fat Intake"},
+  {key:"lbm", label:"Lean Body Mass"},
+  {key:"ideal", label:"Ideal Weight"},
+  {key:"bodyfat", label:"Body Fat %"},
+  {key:"bodytype", label:"Body Type (Shape)"},
+  {key:"hr", label:"Heart Rate Zones"}
+];
+
+const GOAL_OPTIONS = [
+  {label:"Maintain weight", delta:0},
+  {label:"Mild loss — 0.25 kg/week", delta:-275},
+  {label:"Loss — 0.5 kg/week", delta:-550},
+  {label:"Extreme loss — 1 kg/week", delta:-1100},
+  {label:"Mild gain — 0.25 kg/week", delta:275},
+  {label:"Gain — 0.5 kg/week", delta:550},
+  {label:"Extreme gain — 1 kg/week", delta:1100}
+];
+
+function calcMacros(tdee){
+  // Standard splits used by calculator.net-style tools
+  return {
+    carbs:   { lo: tdee*0.40/4, hi: tdee*0.65/4 },   // 40-65% of kcal, 4 kcal/g
+    protein: { lo: tdee*0.10/4, hi: tdee*0.35/4 },   // 10-35% of kcal
+    fat:     { lo: tdee*0.20/9, hi: tdee*0.35/9 },   // 20-35% of kcal, 9 kcal/g
+    satFatMax: tdee*0.10/9                            // <10% kcal from saturated fat
+  };
+}
+
+function calcBodyType(bust, waist, highHip, hip){
+  // calculator.net-style shape classification
+  const whr = hip>0 ? (waist/hip) : 0;
+  let shape = "Undefined";
+  if(bust>0 && waist>0 && hip>0){
+    if(Math.abs(bust-hip) <= bust*0.05 && waist < Math.min(bust,hip)*0.75) shape = "Hourglass";
+    else if(hip > bust*1.05 && waist < hip*0.8) shape = "Pear / Triangle";
+    else if(bust > hip*1.05 && waist < bust*0.8) shape = "Inverted Triangle";
+    else if(Math.abs(bust-hip) <= bust*0.05 && waist >= Math.min(bust,hip)*0.75) shape = "Rectangle / Banana";
+    else if(waist >= Math.min(bust,hip)) shape = "Apple / Round";
+    else shape = "Rectangle / Banana";
+  }
+  return { shape, whr };
+}
+
+function calcInputRow(id, label, val, unit){
+  return `<div><label style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);">${label}</label>
+    <div style="display:flex;align-items:center;background:var(--surface-alt);border-radius:8px;padding:8px;margin-top:4px;">
+      <input type="number" id="${id}" value="${val}" style="flex:1;background:none;color:var(--text);font-family:'SF Mono',monospace;font-weight:700;font-size:13px;">
+      ${unit?`<span style="font-size:11px;color:var(--muted);">${unit}</span>`:""}
+    </div></div>`;
+}
+
+function genderToggle(id, current){
+  return `<div>
+    <label style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);">Gender</label>
+    <div style="display:flex;gap:6px;margin-top:4px;">
+      <button class="cat-chip ${current==='male'?'active':''}" data-gender-toggle="${id}|male" style="flex:1;text-align:center;">Male</button>
+      <button class="cat-chip ${current==='female'?'active':''}" data-gender-toggle="${id}|female" style="flex:1;text-align:center;">Female</button>
+    </div></div>`;
+}
+
+function renderCalculators(){
+  const c = state.calc;
+  const active = c.activeCalc;
+  let fields = "", result = "";
+
+  if(active==="bmr"){
+    fields = `<div class="grid2">
+      ${calcInputRow("calc-age","Age",c.age,"")}
+      ${genderToggle("calc-gender", c.gender)}
+      ${calcInputRow("calc-height","Height",c.height,"cm")}
+      ${calcInputRow("calc-weight","Weight",c.weight,"kg")}
+    </div>`;
+    if(c.result && c.result.type==="bmr"){
+      result = `<div class="info-box" style="text-align:center;padding:16px;margin-top:10px;">
+        <div class="stat-label">Basal Metabolic Rate</div>
+        <div class="mono" style="font-weight:900;font-size:28px;color:var(--accent);">${Math.round(c.result.bmr)}<span style="font-size:13px;color:var(--muted);margin-left:4px;">kcal/day</span></div>
+      </div>`;
+    }
+  }
+
+  if(active==="calorie"){
+    fields = `<div class="grid2">
+      ${calcInputRow("calc-age","Age",c.age,"")}
+      ${genderToggle("calc-gender", c.gender)}
+      ${calcInputRow("calc-height","Height",c.height,"cm")}
+      ${calcInputRow("calc-weight","Weight",c.weight,"kg")}
+    </div>
+    <label style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);display:block;margin:10px 0 4px;">Activity Level</label>
+    <select class="select-input" id="calc-activity">
+      ${ACTIVITY_MULTIPLIERS.map(a=>`<option value="${a.mult}" ${c.activityMultiplier===a.mult?'selected':''}>${a.label}</option>`).join("")}
+    </select>
+    <label style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);display:block;margin:10px 0 4px;">Your Goal</label>
+    <select class="select-input" id="calc-goal">
+      ${GOAL_OPTIONS.map(g=>`<option value="${g.delta}" ${c.goalDelta===g.delta?'selected':''}>${g.label}</option>`).join("")}
+    </select>`;
+    if(c.result && c.result.type==="calorie"){
+      const goalKcal = c.result.tdee + c.result.goalDelta;
+      result = `<div class="grid2" style="margin-top:10px;">
+        <div class="stat-card"><div class="stat-label">Maintenance (TDEE)</div><div class="stat-value" style="color:var(--steel);">${Math.round(c.result.tdee)}<span class="stat-unit">kcal</span></div></div>
+        <div class="stat-card"><div class="stat-label">Goal Calories</div><div class="stat-value" style="color:var(--accent);">${Math.round(goalKcal)}<span class="stat-unit">kcal</span></div></div>
+      </div>
+      <div class="info-box" style="text-align:center;padding:12px;margin-top:8px;">
+        <button class="btn btn-steel" data-action="use-maintenance" style="padding:8px 16px;">Use as Maintenance Calories</button>
+      </div>`;
+    }
+  }
+
+  if(active==="protein"){
+    fields = `<div class="grid2">
+      ${calcInputRow("calc-age","Age",c.age,"")}
+      ${genderToggle("calc-gender", c.gender)}
+      ${calcInputRow("calc-height","Height",c.height,"cm")}
+      ${calcInputRow("calc-weight","Weight",c.weight,"kg")}
+    </div>
+    <label style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);display:block;margin:10px 0 4px;">Activity Level</label>
+    <select class="select-input" id="calc-activity">
+      ${ACTIVITY_MULTIPLIERS.map(a=>`<option value="${a.mult}" ${c.activityMultiplier===a.mult?'selected':''}>${a.label}</option>`).join("")}
+    </select>`;
+    if(c.result && c.result.type==="protein"){
+      result = `<div class="grid2" style="margin-top:10px;">
+        <div class="stat-card"><div class="stat-label">RDA Minimum (0.8g/kg)</div><div class="stat-value" style="color:var(--steel);">${c.result.rda.toFixed(0)}<span class="stat-unit">g/day</span></div></div>
+        <div class="stat-card"><div class="stat-label">% of Calories (10-35%)</div><div class="stat-value" style="color:var(--steel);">${Math.round(c.result.pctLo)}–${Math.round(c.result.pctHi)}<span class="stat-unit">g</span></div></div>
+        <div class="stat-card" style="grid-column:1/-1;"><div class="stat-label">Training / Muscle Building (1.6-2.2g/kg)</div><div class="stat-value" style="color:var(--accent);">${c.result.trainLo.toFixed(0)}–${c.result.trainHi.toFixed(0)}<span class="stat-unit">g/day</span></div></div>
+      </div>
+      <div class="info-box" style="margin-top:10px;font-size:12px;">For your Hyrox training + fat loss goal, the training range is the one to aim for.</div>`;
+    }
+  }
+
+  if(active==="carbs"){
+    fields = `<div class="grid2">
+      ${calcInputRow("calc-age","Age",c.age,"")}
+      ${genderToggle("calc-gender", c.gender)}
+      ${calcInputRow("calc-height","Height",c.height,"cm")}
+      ${calcInputRow("calc-weight","Weight",c.weight,"kg")}
+    </div>
+    <label style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);display:block;margin:10px 0 4px;">Activity Level</label>
+    <select class="select-input" id="calc-activity">
+      ${ACTIVITY_MULTIPLIERS.map(a=>`<option value="${a.mult}" ${c.activityMultiplier===a.mult?'selected':''}>${a.label}</option>`).join("")}
+    </select>`;
+    if(c.result && c.result.type==="carbs"){
+      result = `<div class="info-box" style="text-align:center;padding:16px;margin-top:10px;">
+        <div class="stat-label">Daily Carbohydrates (40–65% of ${Math.round(c.result.tdee)} kcal)</div>
+        <div class="mono" style="font-weight:900;font-size:26px;color:var(--accent);">${Math.round(c.result.lo)}–${Math.round(c.result.hi)}<span style="font-size:13px;color:var(--muted);margin-left:4px;">g/day</span></div>
+      </div>`;
+    }
+  }
+
+  if(active==="fat"){
+    fields = `<div class="grid2">
+      ${calcInputRow("calc-age","Age",c.age,"")}
+      ${genderToggle("calc-gender", c.gender)}
+      ${calcInputRow("calc-height","Height",c.height,"cm")}
+      ${calcInputRow("calc-weight","Weight",c.weight,"kg")}
+    </div>
+    <label style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);display:block;margin:10px 0 4px;">Activity Level</label>
+    <select class="select-input" id="calc-activity">
+      ${ACTIVITY_MULTIPLIERS.map(a=>`<option value="${a.mult}" ${c.activityMultiplier===a.mult?'selected':''}>${a.label}</option>`).join("")}
+    </select>`;
+    if(c.result && c.result.type==="fat"){
+      result = `<div class="grid2" style="margin-top:10px;">
+        <div class="stat-card"><div class="stat-label">Total Fat (20-35%)</div><div class="stat-value" style="color:var(--accent);">${Math.round(c.result.lo)}–${Math.round(c.result.hi)}<span class="stat-unit">g/day</span></div></div>
+        <div class="stat-card"><div class="stat-label">Saturated Fat Max (<10%)</div><div class="stat-value" style="color:var(--steel);">${Math.round(c.result.satMax)}<span class="stat-unit">g/day</span></div></div>
+      </div>
+      <div class="info-box" style="margin-top:10px;font-size:12px;">Based on ${Math.round(c.result.tdee)} kcal/day. Keeping saturated fat under the max supports heart health.</div>`;
+    }
+  }
+
+  if(active==="bodytype"){
+    fields = `<div class="grid2">
+      ${calcInputRow("calc-bust","Bust",c.bust,"cm")}
+      ${calcInputRow("calc-bwaist","Waist",c.bwaist,"cm")}
+      ${calcInputRow("calc-highhip","High Hip",c.highHip,"cm")}
+      ${calcInputRow("calc-bhip","Hip",c.bhip,"cm")}
+    </div>`;
+    if(c.result && c.result.type==="bodytype"){
+      result = `<div class="info-box" style="text-align:center;padding:16px;margin-top:10px;">
+        <div class="stat-label">Body Shape</div>
+        <div style="font-weight:900;font-size:24px;color:var(--accent);margin:4px 0;">${c.result.shape}</div>
+        <div class="stat-label" style="margin-top:8px;">Waist-Hip Ratio</div>
+        <div class="mono" style="font-weight:900;font-size:20px;color:var(--steel);">${c.result.whr.toFixed(2)}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:8px;">WHR is a better health indicator than shape category.</div>
+      </div>`;
+    }
+  }
+
+  if(active==="lbm"){
+    fields = `<div class="grid2">
+      ${genderToggle("calc-gender", c.gender)}
+      ${calcInputRow("calc-height","Height",c.height,"cm")}
+      ${calcInputRow("calc-weight","Weight",c.weight,"kg")}
+    </div>`;
+    if(c.result && c.result.type==="lbm"){
+      result = `<div class="grid2" style="margin-top:10px;">
+        <div class="stat-card"><div class="stat-label">Boer Formula</div><div class="stat-value" style="color:var(--accent);">${c.result.boer.toFixed(1)}<span class="stat-unit">kg</span></div></div>
+        <div class="stat-card"><div class="stat-label">Hume Formula</div><div class="stat-value" style="color:var(--steel);">${c.result.hume.toFixed(1)}<span class="stat-unit">kg</span></div></div>
+      </div>
+      <div class="info-box" style="margin-top:10px;font-size:12px;">Two different formulas, shown for comparison — both are estimates, not measurements.</div>`;
+    }
+  }
+
+  if(active==="ideal"){
+    fields = `<div class="grid2">
+      ${genderToggle("calc-gender", c.gender)}
+      ${calcInputRow("calc-height","Height",c.height,"cm")}
+    </div>`;
+    if(c.result && c.result.type==="ideal"){
+      const r = c.result;
+      result = `<div class="grid2" style="margin-top:10px;">
+        <div class="stat-card"><div class="stat-label">Robinson</div><div class="stat-value">${r.Robinson.toFixed(1)}<span class="stat-unit">kg</span></div></div>
+        <div class="stat-card"><div class="stat-label">Miller</div><div class="stat-value">${r.Miller.toFixed(1)}<span class="stat-unit">kg</span></div></div>
+        <div class="stat-card"><div class="stat-label">Devine</div><div class="stat-value">${r.Devine.toFixed(1)}<span class="stat-unit">kg</span></div></div>
+        <div class="stat-card"><div class="stat-label">Hamwi</div><div class="stat-value">${r.Hamwi.toFixed(1)}<span class="stat-unit">kg</span></div></div>
+      </div>`;
+    }
+  }
+
+  if(active==="bodyfat"){
+    fields = `<div class="grid2">
+      ${genderToggle("calc-gender", c.gender)}
+      ${calcInputRow("calc-height","Height",c.height,"cm")}
+      ${calcInputRow("calc-neck","Neck",c.neck,"cm")}
+      ${calcInputRow("calc-waist","Waist",c.waist,"cm")}
+      ${c.gender==="female" ? calcInputRow("calc-hip","Hip",c.hip,"cm") : ""}
+    </div>`;
+    if(c.result && c.result.type==="bodyfat"){
+      result = `<div class="info-box" style="text-align:center;padding:16px;margin-top:10px;">
+        <div class="stat-label">Estimated Body Fat (US Navy method)</div>
+        <div class="mono" style="font-weight:900;font-size:28px;color:var(--accent);">${c.result.bf.toFixed(1)}<span style="font-size:13px;color:var(--muted);margin-left:4px;">%</span></div>
+      </div>`;
+    }
+  }
+
+  if(active==="hr"){
+    fields = `<div class="grid2">
+      ${calcInputRow("calc-age","Age",c.age,"")}
+      ${calcInputRow("calc-resting","Resting HR (optional)",c.restingHR,"bpm")}
+    </div>`;
+    if(c.result && c.result.type==="hr"){
+      result = `<div class="info-box" style="padding:14px;margin-top:10px;">
+        <div class="row-between" style="margin-bottom:10px;">
+          <span class="stat-label">Max Heart Rate</span>
+          <span class="mono" style="font-weight:900;color:var(--accent);">${c.result.maxHR} bpm</span>
+        </div>
+        ${c.result.rows.map(z=>`<div class="row-between" style="padding:6px 0;border-top:1px solid var(--border);">
+          <span style="font-size:12px;color:var(--muted);">${z.label}</span>
+          <span class="mono" style="font-size:13px;color:var(--steel);">${z.lo}–${z.hi} bpm</span>
+        </div>`).join("")}
+        ${c.result.useKarvonen ? `<div style="font-size:11px;color:var(--muted);margin-top:8px;">Calculated using the Karvonen formula (accounts for resting HR).</div>` : ""}
+      </div>`;
+    }
+  }
+
+  return `
+    <select class="select-input" id="calc-picker">
+      ${CALCULATORS.map(cc=>`<option value="${cc.key}" ${active===cc.key?'selected':''}>${cc.label}</option>`).join("")}
+    </select>
+    ${fields}
+    <button class="btn btn-accent btn-block" data-action="run-calculator" style="margin-top:10px;">Calculate</button>
+    ${result}
+  `;
+}
+
 function renderBodyTab(){
   const entries = state.bodylog;
   const first = entries[entries.length-1];
@@ -555,6 +953,11 @@ function renderBodyTab(){
         <span class="mono" style="font-size:12px;color:var(--steel);">${e.hrv||'–'}ms</span>
         <button class="del" data-del-body="${e.id}">${svg('x',12)}</button>
       </div>`).join("")}
+
+    <div class="eyebrow-label">Calculators</div>
+    <div class="info-box" style="padding:14px;">
+      ${renderCalculators()}
+    </div>
   `;
 }
 
@@ -945,11 +1348,190 @@ function renderProgressTab(){
 }
 
 /* =========================================================
+   SETTINGS TAB — export/import + workout settings
+========================================================= */
+const ALL_DATA_KEYS = ["hx_completed","hx_active_week","hx_nutrition","hx_bodylog","hx_custom_exercises",
+  "hx_workout_log","hx_food_log","hx_routines","hx_calc","hx_settings","hx_rest_duration","hx_tab"];
+
+function exportAllJSON(){
+  const data = { app:"hyrox-prep", version:1, exportedAt:new Date().toISOString(), data:{} };
+  ALL_DATA_KEYS.forEach(k=>{ const v = localStorage.getItem(k); if(v!==null) data.data[k]=v; });
+  downloadFile("hyrox-prep-backup-"+todayStr()+".json", JSON.stringify(data,null,2), "application/json");
+}
+
+function csvEscape(s){ s = String(s==null?"":s); return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s; }
+
+function exportWorkoutsCSV(){
+  const rows = [["date","exercise","muscle","set_number","weight_kg","reps","rpe","duration_min","session_volume_kg","notes"]];
+  state.workoutLog.slice().reverse().forEach(s=>{
+    s.exercises.forEach(ex=>{
+      ex.sets.forEach((set,si)=>{
+        rows.push([s.date, ex.name, getMuscle(ex.name), si+1, set.weight||"", set.reps||"", set.rpe||"", s.durationMin||"", s.volume?Math.round(s.volume):"", ex.notes||""]);
+      });
+    });
+  });
+  // plan completions as their own rows
+  Object.entries(state.completed).forEach(([key,ts])=>{
+    const [wk,day,exName] = key.split("|");
+    rows.push([new Date(ts).toISOString().slice(0,10), exName+" (Plan "+wk+" "+day+")", getMuscle(exName), "", "", "", "", "", "", "plan check-off"]);
+  });
+  const csv = rows.map(r=>r.map(csvEscape).join(",")).join("\n");
+  downloadFile("hyrox-workouts-"+todayStr()+".csv", csv, "text/csv");
+}
+
+function exportMeasurementsCSV(){
+  const rows = [["date","weight_kg","sleep_hrs","hrv_ms","waist_cm","chest_cm","arms_cm","bodyfat_pct"]];
+  state.bodylog.slice().reverse().forEach(e=>{
+    rows.push([e.date, e.weight||"", e.sleep||"", e.hrv||"", e.waist||"", e.chest||"", e.arms||"", e.bodyfat||""]);
+  });
+  const csv = rows.map(r=>r.map(csvEscape).join(",")).join("\n");
+  downloadFile("hyrox-measurements-"+todayStr()+".csv", csv, "text/csv");
+}
+
+function downloadFile(filename, content, mime){
+  const blob = new Blob([content], {type:mime});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 2000);
+}
+
+function importAllJSON(file){
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    try{
+      const parsed = JSON.parse(reader.result);
+      if(!parsed || parsed.app!=="hyrox-prep" || !parsed.data){
+        alert("This doesn't look like a Hyrox Prep backup file.");
+        return;
+      }
+      if(!confirm("Import will REPLACE all current app data with the backup. Continue?")) return;
+      Object.entries(parsed.data).forEach(([k,v])=>{
+        if(ALL_DATA_KEYS.includes(k)) localStorage.setItem(k, v);
+      });
+      location.reload();
+    }catch(e){
+      alert("Could not read that file — is it a valid backup JSON?");
+    }
+  };
+  reader.readAsText(file);
+}
+
+/* Plate calculator: greedy plates-per-side for a target barbell weight */
+const PLATE_SIZES = [25,20,15,10,5,2.5,1.25];
+function calcPlates(target, barWeight){
+  if(!target || target <= barWeight) return { perSide:[], remainder:0 };
+  let perSideWeight = (target - barWeight)/2;
+  const perSide = [];
+  let rem = perSideWeight;
+  PLATE_SIZES.forEach(p=>{
+    const count = Math.floor(rem/p + 1e-9);
+    if(count>0){ perSide.push({plate:p, count}); rem = +(rem - count*p).toFixed(3); }
+  });
+  return { perSide, remainder: rem };
+}
+
+function settingToggle(key, label, desc){
+  const on = !!state.settings[key];
+  return `<div style="padding:14px 0;border-bottom:1px solid var(--border);">
+    <div class="row-between">
+      <span style="font-weight:700;font-size:15px;">${label}</span>
+      <button data-setting-toggle="${key}" style="width:46px;height:26px;border-radius:13px;border:none;cursor:pointer;position:relative;background:${on?'var(--steel)':'var(--surface-alt)'};transition:background .15s;">
+        <span style="position:absolute;top:3px;${on?'right:3px':'left:3px'};width:20px;height:20px;border-radius:50%;background:${on?'#fff':'#6a6a74'};"></span>
+      </button>
+    </div>
+    ${desc?`<div style="font-size:12px;color:var(--muted);margin-top:4px;max-width:85%;">${desc}</div>`:""}
+  </div>`;
+}
+
+function renderSettingsTab(){
+  const s = state.settings;
+  return `
+    <div class="eyebrow-label" style="margin-top:4px;">Export Data</div>
+    <div class="info-box" style="padding:14px;">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">Export your entire workout and measurement history. The JSON backup can be imported back; CSVs are for spreadsheets.</div>
+      <button class="btn btn-accent btn-block" data-action="export-json" style="margin-bottom:8px;">Full Backup (JSON)</button>
+      <button class="btn btn-steel btn-block" data-action="export-workouts-csv" style="margin-bottom:8px;">Export Workouts (CSV)</button>
+      <button class="btn btn-steel btn-block" data-action="export-measurements-csv">Export Measurements (CSV)</button>
+    </div>
+
+    <div class="eyebrow-label">Import Data</div>
+    <div class="info-box" style="padding:14px;">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">Restore from a Full Backup (JSON) file. This replaces all current data in the app.</div>
+      <input type="file" id="import-file" accept=".json,application/json" style="display:none;">
+      <button class="btn btn-ghost btn-block" data-action="import-json">Choose Backup File…</button>
+    </div>
+
+    <div class="eyebrow-label">Workout Settings</div>
+    <div class="info-box" style="padding:0 14px;">
+      ${settingToggle("sounds","Sounds","Beep when the rest timer finishes.")}
+      ${settingToggle("vibration","Vibration","Vibrate when the rest timer finishes.")}
+      ${settingToggle("autoStartRest","Auto-Start Rest Timer","Checking off a set automatically starts that exercise's rest timer.")}
+      ${settingToggle("keepAwake","Keep Awake During Workout","Prevents your phone screen from sleeping while a session is in progress.")}
+      ${settingToggle("plateCalc","Plate Calculator","Shows a plates button next to weight inputs for barbell exercises.")}
+      ${settingToggle("rpeTracking","RPE Tracking","Show the RPE column in the workout logger.")}
+      <div style="padding:14px 0;">
+        <div class="row-between">
+          <span style="font-weight:700;font-size:15px;">Default Rest Timer</span>
+          <select class="select-input" id="default-rest-select" style="width:auto;margin:0;padding:6px 10px;">
+            ${[0,30,60,90,120,150,180,240].map(v=>`<option value="${v}" ${s.defaultRest===v?'selected':''}>${v===0?'Off':v+'s'}</option>`).join("")}
+          </select>
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px;">New exercises added to a session start with this rest duration.</div>
+      </div>
+    </div>
+
+    <div class="eyebrow-label">Danger Zone</div>
+    <div class="info-box" style="padding:14px;">
+      <button class="btn btn-ghost btn-block" data-action="reset-all" style="color:#ff6b6b;">Reset All App Data</button>
+    </div>
+  `;
+}
+
+/* =========================================================
    EVENT HANDLERS
 ========================================================= */
 function attachHandlers(){
   document.querySelectorAll("[data-nav]").forEach(el=>{
     el.addEventListener("click", ()=>{ state.tab = el.dataset.nav; render(); });
+  });
+
+  // Settings
+  document.querySelectorAll("[data-setting-toggle]").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      const key = el.dataset.settingToggle;
+      state.settings[key] = !state.settings[key];
+      if(key==="keepAwake") applyWakeLock();
+      render();
+    });
+  });
+  const restSelect = document.getElementById("default-rest-select");
+  if(restSelect) restSelect.addEventListener("change", ()=>{
+    state.settings.defaultRest = Number(restSelect.value);
+    persist();
+  });
+  const expJsonBtn = document.querySelector('[data-action="export-json"]');
+  if(expJsonBtn) expJsonBtn.addEventListener("click", exportAllJSON);
+  const expWkBtn = document.querySelector('[data-action="export-workouts-csv"]');
+  if(expWkBtn) expWkBtn.addEventListener("click", exportWorkoutsCSV);
+  const expMeasBtn = document.querySelector('[data-action="export-measurements-csv"]');
+  if(expMeasBtn) expMeasBtn.addEventListener("click", exportMeasurementsCSV);
+  const impBtn = document.querySelector('[data-action="import-json"]');
+  const impFile = document.getElementById("import-file");
+  if(impBtn && impFile){
+    impBtn.addEventListener("click", ()=> impFile.click());
+    impFile.addEventListener("change", ()=>{ if(impFile.files.length) importAllJSON(impFile.files[0]); });
+  }
+  const resetBtn = document.querySelector('[data-action="reset-all"]');
+  if(resetBtn) resetBtn.addEventListener("click", ()=>{
+    if(confirm("This permanently deletes ALL app data (workouts, logs, routines, settings). Are you sure?")){
+      if(confirm("Last check — this cannot be undone. Delete everything?")){
+        ALL_DATA_KEYS.forEach(k=>localStorage.removeItem(k));
+        location.reload();
+      }
+    }
   });
 
   // Plan tab
@@ -972,6 +1554,7 @@ function attachHandlers(){
   const startBtn = document.querySelector('[data-action="start-session"]');
   if(startBtn) startBtn.addEventListener("click", ()=>{
     state.session = { startedAt: Date.now(), exercises: [] };
+    applyWakeLock();
     render();
   });
 
@@ -1022,7 +1605,7 @@ function attachHandlers(){
       state.session = {
         startedAt: Date.now(),
         exercises: routine.exercises.map(e=>({
-          name: e.name, notes:"", restDuration:0,
+          name: e.name, notes:"", restDuration:state.settings.defaultRest,
           sets: Array.from({length:e.sets}, ()=>({weight:"",reps:"",rpe:"",done:false}))
         }))
       };
@@ -1048,6 +1631,7 @@ function attachHandlers(){
       });
     }
     state.session = null;
+    applyWakeLock();
     render();
   });
   document.querySelectorAll("[data-del-session]").forEach(el=>{
@@ -1060,7 +1644,7 @@ function attachHandlers(){
   if(addExBtn) addExBtn.addEventListener("click", ()=>{
     const picker = document.getElementById("ex-picker");
     if(picker && picker.value){
-      state.session.exercises.push({ name: picker.value, notes:"", restDuration:0,
+      state.session.exercises.push({ name: picker.value, notes:"", restDuration:state.settings.defaultRest,
         sets: [{ weight:"", reps:"", rpe:"", done:false }] });
       render();
     }
@@ -1084,6 +1668,19 @@ function attachHandlers(){
       ex.restDuration = REST_OPTIONS[(idx+1) % REST_OPTIONS.length];
       render();
     });
+  });
+  document.querySelectorAll("[data-plate-calc]").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      const exi = el.dataset.plateCalc;
+      state.plateCalcOpen = state.plateCalcOpen===exi ? null : exi;
+      render();
+    });
+  });
+  const runPlateBtn = document.querySelector('[data-action="run-plate-calc"]');
+  if(runPlateBtn) runPlateBtn.addEventListener("click", ()=>{
+    state.plateTarget = document.getElementById("plate-target").value;
+    state.plateBar = document.getElementById("plate-bar").value;
+    render();
   });
   document.querySelectorAll("[data-add-set]").forEach(el=>{
     el.addEventListener("click", ()=>{
@@ -1117,7 +1714,7 @@ function attachHandlers(){
       const set = ex.sets[si];
       set.done = !set.done;
       render();
-      if(set.done && ex.restDuration>0) startTimer(ex.restDuration);
+      if(set.done && ex.restDuration>0 && state.settings.autoStartRest) startTimer(ex.restDuration);
     });
   });
 
@@ -1186,6 +1783,80 @@ function attachHandlers(){
       state.bodylog = state.bodylog.filter(e=>e.id !== Number(el.dataset.delBody));
       render();
     });
+  });
+
+  // Calculators
+  const calcPicker = document.getElementById("calc-picker");
+  if(calcPicker) calcPicker.addEventListener("change", ()=>{
+    state.calc.activeCalc = calcPicker.value;
+    state.calc.result = null;
+    render();
+  });
+  document.querySelectorAll("[data-gender-toggle]").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      const [, val] = el.dataset.genderToggle.split("|");
+      state.calc.gender = val;
+      render();
+    });
+  });
+  const runCalcBtn = document.querySelector('[data-action="run-calculator"]');
+  if(runCalcBtn) runCalcBtn.addEventListener("click", ()=>{
+    const c = state.calc;
+    const readNum = (id, fallback)=>{ const el=document.getElementById(id); return el ? (Number(el.value)||fallback) : fallback; };
+    c.age = readNum("calc-age", c.age);
+    c.height = readNum("calc-height", c.height);
+    c.weight = readNum("calc-weight", c.weight);
+    c.neck = readNum("calc-neck", c.neck);
+    c.waist = readNum("calc-waist", c.waist);
+    c.hip = readNum("calc-hip", c.hip);
+    c.restingHR = readNum("calc-resting", 0);
+    c.bust = readNum("calc-bust", c.bust);
+    c.bwaist = readNum("calc-bwaist", c.bwaist);
+    c.highHip = readNum("calc-highhip", c.highHip);
+    c.bhip = readNum("calc-bhip", c.bhip);
+    const activityEl = document.getElementById("calc-activity");
+    if(activityEl) c.activityMultiplier = Number(activityEl.value);
+    const goalEl = document.getElementById("calc-goal");
+    if(goalEl) c.goalDelta = Number(goalEl.value);
+
+    if(c.activeCalc==="bmr"){
+      const bmr = calcBMR(c.age, c.gender, c.height, c.weight);
+      c.result = { type:"bmr", bmr };
+    } else if(c.activeCalc==="calorie"){
+      const bmr = calcBMR(c.age, c.gender, c.height, c.weight);
+      c.result = { type:"calorie", tdee: bmr*c.activityMultiplier, goalDelta: c.goalDelta };
+    } else if(c.activeCalc==="protein"){
+      const tdee = calcBMR(c.age, c.gender, c.height, c.weight)*c.activityMultiplier;
+      const m = calcMacros(tdee);
+      c.result = { type:"protein", rda: c.weight*0.8, pctLo: m.protein.lo, pctHi: m.protein.hi,
+        trainLo: c.weight*1.6, trainHi: c.weight*2.2 };
+    } else if(c.activeCalc==="carbs"){
+      const tdee = calcBMR(c.age, c.gender, c.height, c.weight)*c.activityMultiplier;
+      const m = calcMacros(tdee);
+      c.result = { type:"carbs", tdee, lo: m.carbs.lo, hi: m.carbs.hi };
+    } else if(c.activeCalc==="fat"){
+      const tdee = calcBMR(c.age, c.gender, c.height, c.weight)*c.activityMultiplier;
+      const m = calcMacros(tdee);
+      c.result = { type:"fat", tdee, lo: m.fat.lo, hi: m.fat.hi, satMax: m.satFatMax };
+    } else if(c.activeCalc==="bodytype"){
+      c.result = { type:"bodytype", ...calcBodyType(c.bust, c.bwaist, c.highHip, c.bhip) };
+    } else if(c.activeCalc==="lbm"){
+      c.result = { type:"lbm", ...calcLBM(c.gender, c.height, c.weight) };
+    } else if(c.activeCalc==="ideal"){
+      c.result = { type:"ideal", ...calcIdealWeight(c.gender, c.height) };
+    } else if(c.activeCalc==="bodyfat"){
+      c.result = { type:"bodyfat", bf: calcBodyFatNavy(c.gender, c.height, c.neck, c.waist, c.hip) };
+    } else if(c.activeCalc==="hr"){
+      c.result = { type:"hr", ...calcHeartRateZones(c.age, c.restingHR) };
+    }
+    render();
+  });
+  const useMaintBtn = document.querySelector('[data-action="use-maintenance"]');
+  if(useMaintBtn) useMaintBtn.addEventListener("click", ()=>{
+    if(state.calc.result && state.calc.result.type==="calorie"){
+      state.nutrition.maintenance = Math.round(state.calc.result.tdee);
+      render();
+    }
   });
 
   // Progress tab
