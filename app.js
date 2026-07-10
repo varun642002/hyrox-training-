@@ -193,7 +193,9 @@ const ICONS = {
   plus:'<path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>',
   gear:'<circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2.8v3M12 18.2v3M2.8 12h3M18.2 12h3M5.5 5.5l2.1 2.1M16.4 16.4l2.1 2.1M18.5 5.5l-2.1 2.1M7.6 16.4l-2.1 2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
   home:'<path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>',
-  more:'<circle cx="5" cy="12" r="1.8" fill="currentColor"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/><circle cx="19" cy="12" r="1.8" fill="currentColor"/>'
+  more:'<circle cx="5" cy="12" r="1.8" fill="currentColor"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/><circle cx="19" cy="12" r="1.8" fill="currentColor"/>',
+  chevronUp:'<path d="M6 15l6-6 6 6" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
+  chevronDown:'<path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'
 };
 function svg(name, size=19){ return `<svg width="${size}" height="${size}" viewBox="0 0 24 24">${ICONS[name]}</svg>`; }
 
@@ -234,6 +236,9 @@ const state = {
   session: LS.get("hx_active_session", null),
   prs: LS.get("hx_prs", []),
   lastSessionPRs: null, // transient — set right after finishing a workout, shown as a celebration banner
+  viewingSessionId: null, // when set, Workout tab shows the detailed history view for this session
+  showAllSessions: false,
+  editingSessionId: null, // when set, active session editor is patching an existing finished workout instead of creating a new one
   libCategory: "All",
   libSearch: "",
   showCustomForm: false,
@@ -294,6 +299,8 @@ function runMigrations(){
 function render(){
   try{
     renderApp();
+    if(state.session) ensureElapsedTimerRunning();
+    else stopElapsedTimer();
   }catch(err){
     console.error("Ignyt render error:", err);
     renderErrorScreen(err);
@@ -579,6 +586,7 @@ function computeHistoricalBests(){
     (session.exercises||[]).forEach(ex=>{
       if(!bests[ex.name]) bests[ex.name] = { weight:0, oneRM:0, repsAtWeight:{} };
       (ex.sets||[]).forEach(s=>{
+        if(!isCountingSet(s)) return;
         const w = parseFloat(s.weight), r = parseFloat(s.reps);
         if(isNaN(w) || isNaN(r) || r<=0) return;
         if(w > bests[ex.name].weight) bests[ex.name].weight = w;
@@ -610,6 +618,7 @@ function detectPRs(session, workoutId, finishedAt, sessionVolume){
 
   (session.exercises||[]).forEach(ex=>{
     const validSets = (ex.sets||[]).filter(s=>{
+      if(!isCountingSet(s)) return false;
       const w = parseFloat(s.weight), r = parseFloat(s.reps);
       return !isNaN(w) && !isNaN(r) && r>0;
     });
@@ -660,6 +669,32 @@ function prValueLabel(pr){
 const REST_OPTIONS = [0,60,90,120,180];
 const RPE_OPTIONS = ["–","6","6.5","7","7.5","8","8.5","9","9.5","10"];
 
+const SET_TYPE_CYCLE = ["working","warmup","drop","failure"];
+const SET_TYPE_META = {
+  working: { badge:"", color:"var(--muted)" },
+  warmup:  { badge:"W", color:"var(--steel)" },
+  drop:    { badge:"D", color:"var(--accent)" },
+  failure: { badge:"F", color:"#ff6b6b" }
+};
+function nextSetType(t){
+  const i = SET_TYPE_CYCLE.indexOf(t||"working");
+  return SET_TYPE_CYCLE[(i+1) % SET_TYPE_CYCLE.length];
+}
+/* Volume/PR-eligible sets exclude warm-ups (standard practice — warmups don't represent
+   a working effort). Backward-compatible: sets logged before this feature have no `type`
+   field and are treated as "working". */
+function isCountingSet(set){ return (set.type||"working") !== "warmup"; }
+
+function computeSessionVolume(exercises){
+  let v = 0;
+  (exercises||[]).forEach(ex=> (ex.sets||[]).forEach(s=>{
+    if(!isCountingSet(s)) return;
+    const w = parseFloat(s.weight), r = parseFloat(s.reps);
+    if(!isNaN(w) && !isNaN(r)) v += w*r;
+  }));
+  return v;
+}
+
 function getPreviousSet(exerciseName, setIndex){
   for(const sess of state.workoutLog){
     const ex = sess.exercises.find(e=>e.name===exerciseName);
@@ -703,6 +738,56 @@ function renderRoutineBuilder(){
   </div>`;
 }
 
+function renderSessionDetail(s){
+  const muscles = sessionMuscles(s.exercises);
+  const workingSets = s.exercises.reduce((a,e)=>a+e.sets.filter(set=>set.weight||set.reps).length, 0);
+  const prs = state.prs.filter(p=>p.workoutId===s.id);
+  const startTime = s.startedAt ? new Date(s.startedAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : null;
+  const endTime = s.finishedAt ? new Date(s.finishedAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : null;
+  return `
+    <div class="row-between" style="margin-bottom:4px;">
+      <button class="btn btn-ghost" data-action="close-session-detail" style="padding:6px 12px;font-size:12px;">← Back</button>
+    </div>
+    <div style="margin:12px 0 4px;">
+      <div style="font-size:18px;font-weight:900;">${s.exercises.length} Exercise Session</div>
+      <div class="mono" style="font-size:12px;color:var(--muted);margin-top:2px;">${new Date(s.date).toLocaleDateString('default',{weekday:'long',month:'long',day:'numeric'})}${startTime&&endTime?` · ${startTime}–${endTime}`:''}</div>
+    </div>
+    ${muscles.length? `<div style="margin:8px 0 4px;">${muscles.map(m=>`<span class="muscle-chip active">${m}</span>`).join("")}</div>`:""}
+    ${s.notes? `<div class="info-box" style="padding:10px 14px;margin:8px 0;font-size:12px;font-style:italic;color:var(--text);">"${s.notes}"</div>`:""}
+
+    <div class="grid2" style="margin-top:12px;margin-bottom:8px;">
+      <div class="stat-card"><div class="stat-label">Duration</div><div class="stat-value">${s.durationMin||'–'}<span class="stat-unit">min</span></div></div>
+      <div class="stat-card"><div class="stat-label">Total Volume</div><div class="stat-value">${Math.round(s.volume||0).toLocaleString()}<span class="stat-unit">kg</span></div></div>
+      <div class="stat-card"><div class="stat-label">Working Sets</div><div class="stat-value">${workingSets}</div></div>
+      <div class="stat-card"><div class="stat-label">Personal Records</div><div class="stat-value" style="color:${prs.length?'var(--accent)':'var(--text)'};">${prs.length?'🏆 ':''}${prs.length}</div></div>
+    </div>
+
+    ${prs.length? `<div class="info-box" style="padding:10px 14px;margin-bottom:14px;">
+      ${prs.map(pr=>`<div style="font-size:12px;padding:4px 0;"><b>${pr.exerciseName||'Session'}</b> — ${prTypeLabel(pr)}: <span style="color:var(--accent);font-weight:700;">${prValueLabel(pr)}</span></div>`).join("")}
+    </div>` : ""}
+
+    <div class="eyebrow-label">Exercises</div>
+    ${s.exercises.map(ex=>`<div class="ex-log-card">
+      <div style="font-weight:800;color:var(--steel);font-size:15px;">${ex.name}</div>
+      <span class="muscle-chip">${getMuscle(ex.name)}</span>
+      ${ex.notes?`<div style="font-size:12px;color:var(--muted);margin-top:6px;font-style:italic;">"${ex.notes}"</div>`:""}
+      <div style="margin-top:8px;">
+        ${ex.sets.map((set,i)=>`<div class="row-between" style="padding:5px 0;border-top:1px solid var(--border);">
+          <span class="mono" style="font-size:12px;color:var(--muted);">Set ${i+1}</span>
+          <span class="mono" style="font-size:13px;">${set.weight||'–'}kg × ${set.reps||'–'}${set.rpe?` <span style="color:var(--muted);">@ RPE ${set.rpe}</span>`:''}</span>
+        </div>`).join("")}
+      </div>
+    </div>`).join("")}
+
+    <div class="grid2" style="margin-top:16px;">
+      <button class="btn btn-accent" data-action="repeat-workout" data-session-id="${s.id}" style="display:flex;align-items:center;justify-content:center;gap:8px;">${svg('workout',15)} Repeat Workout</button>
+      <button class="btn btn-steel" data-action="edit-workout" data-session-id="${s.id}">Edit Workout</button>
+    </div>
+    <button class="btn btn-ghost btn-block" data-action="save-session-as-routine" data-session-id="${s.id}" style="margin-top:8px;">Save as Routine</button>
+    <button class="btn btn-ghost btn-block" data-action="delete-session-confirmed" data-session-id="${s.id}" style="margin-top:8px;color:#ff6b6b;">Delete Workout</button>
+  `;
+}
+
 function renderPRCelebration(){
   const prs = state.lastSessionPRs;
   return `<div class="info-box" style="padding:16px;margin-bottom:14px;background:rgba(255,90,31,.1);border:1px solid rgba(255,90,31,.35);">
@@ -719,7 +804,13 @@ function renderPRCelebration(){
 
 function renderWorkoutTab(){
   if(!state.session){
-    const recent = state.workoutLog.slice(0,5);
+    if(state.viewingSessionId){
+      const s = state.workoutLog.find(x=>x.id===state.viewingSessionId);
+      if(s) return renderSessionDetail(s);
+      state.viewingSessionId = null; // stale id (e.g. deleted) — fall through to list
+    }
+    const showAll = state.showAllSessions;
+    const recent = showAll ? state.workoutLog : state.workoutLog.slice(0,5);
     return `
       ${state.lastSessionPRs && state.lastSessionPRs.length ? renderPRCelebration() : ""}
       <button class="btn btn-accent btn-block" data-action="start-session" style="margin-top:4px;">${svg('plus',16)} Start Empty Workout</button>
@@ -739,13 +830,17 @@ function renderWorkoutTab(){
           <button class="btn btn-steel btn-block" data-start-routine="${r.id}">Start Routine</button>
         </div>`).join("")}
 
-      <div class="eyebrow-label" style="margin-top:20px;">Recent Sessions</div>
+      <div class="row-between" style="margin-top:20px;">
+        <span class="eyebrow-label" style="margin:0;">Recent Sessions</span>
+        ${state.workoutLog.length>5 ? `<button class="btn btn-ghost" data-action="toggle-show-all-sessions" style="padding:4px 10px;font-size:11px;">${showAll?'Show Less':'Show All ('+state.workoutLog.length+')'}</button>` : ""}
+      </div>
       ${recent.length===0?`<div class="empty-note">No sessions logged yet.</div>`:
         recent.map(s=>{
           const muscles = sessionMuscles(s.exercises);
-          return `<div class="history-row" style="align-items:flex-start;">
+          const prCount = state.prs.filter(p=>p.workoutId===s.id).length;
+          return `<div class="history-row" style="align-items:flex-start;cursor:pointer;" data-view-session="${s.id}">
           <div>
-            <div style="font-weight:700;font-size:13px;">${s.exercises.length} exercise${s.exercises.length!==1?'s':''}${s.durationMin?` · ${s.durationMin} min`:''}</div>
+            <div style="font-weight:700;font-size:13px;">${s.exercises.length} exercise${s.exercises.length!==1?'s':''}${s.durationMin?` · ${s.durationMin} min`:''}${prCount?` · 🏆 ${prCount} PR${prCount>1?'s':''}`:''}</div>
             <div class="mono" style="font-size:11px;color:var(--muted);margin-top:2px;">${s.date}${s.volume?` · ${Math.round(s.volume)}kg vol`:''}</div>
             <div style="margin-top:5px;">${muscles.map(m=>`<span class="muscle-chip">${m}</span>`).join("")}</div>
           </div>
@@ -755,15 +850,25 @@ function renderWorkoutTab(){
   }
   const s = state.session;
   const muscles = sessionMuscles(s.exercises);
+  const isEditing = !!state.editingSessionId;
+  const liveVolume = Math.round(computeSessionVolume(s.exercises));
   return `
     <div class="row-between" style="margin-bottom:4px;">
       <div>
-        <div class="eyebrow-label" style="margin:0 0 2px;">In Progress</div>
-        <div class="mono" style="font-size:12px;color:var(--muted);">Started ${new Date(s.startedAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</div>
+        <div class="eyebrow-label" style="margin:0 0 2px;">${isEditing ? 'Editing Workout' : 'In Progress'}</div>
+        <div class="mono" style="font-size:12px;color:var(--muted);">
+          ${isEditing ? s.date : `Started ${new Date(s.startedAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})} · <span id="session-elapsed">${formatDuration(Date.now()-s.startedAt)}</span>`}
+          ${liveVolume>0?` · ${liveVolume.toLocaleString()}kg vol`:''}
+        </div>
       </div>
-      <button class="btn btn-accent" style="padding:10px 18px;" data-action="finish-session">Finish</button>
+      <div style="display:flex;gap:8px;">
+        ${isEditing?`<button class="btn btn-ghost" style="padding:10px 14px;" data-action="cancel-edit-session">Cancel</button>`:''}
+        <button class="btn btn-accent" style="padding:10px 18px;" data-action="finish-session">${isEditing?'Save':'Finish'}</button>
+      </div>
     </div>
     ${muscles.length? `<div style="margin:10px 0 4px;">${muscles.map(m=>`<span class="muscle-chip active">${m}</span>`).join("")}</div>`:""}
+    <textarea id="session-notes" placeholder="Workout notes (how it felt, conditions, anything worth remembering)…"
+      style="width:100%;background:var(--surface-alt);border-radius:8px;padding:9px 10px;font-size:12px;color:var(--text);margin:6px 0 14px;resize:vertical;min-height:36px;border:none;font-family:inherit;">${s.notes||''}</textarea>
 
     <div class="eyebrow-label">Add Exercise</div>
     <select class="select-input" id="ex-picker">
@@ -782,7 +887,7 @@ function renderWorkoutTab(){
         const showRPE = state.settings.rpeTracking;
         const isBarbell = (LIBRARY["Barbell"]||[]).some(i=>i[0]===ex.name);
         const showPlates = state.settings.plateCalc && isBarbell;
-        const gridCols = showRPE ? "24px 1fr 52px 52px 44px 32px" : "24px 1fr 62px 62px 32px";
+        const gridCols = showRPE ? "30px 1fr 52px 52px 44px 32px" : "30px 1fr 62px 62px 32px";
         return `
         <div class="ex-log-card">
           <div class="row-between" style="margin-bottom:4px;">
@@ -790,7 +895,11 @@ function renderWorkoutTab(){
               <div style="font-weight:800;color:var(--steel);font-size:15px;">${ex.name}</div>
               <span class="muscle-chip">${muscle}</span>
             </div>
-            <button class="del" data-del-exercise="${exi}">${svg('x',15)}</button>
+            <div style="display:flex;align-items:center;gap:2px;">
+              <button class="del" data-move-exercise-up="${exi}" ${exi===0?'disabled style="opacity:.25;"':''} title="Move up">${svg('chevronUp',15)}</button>
+              <button class="del" data-move-exercise-down="${exi}" ${exi===s.exercises.length-1?'disabled style="opacity:.25;"':''} title="Move down">${svg('chevronDown',15)}</button>
+              <button class="del" data-del-exercise="${exi}">${svg('x',15)}</button>
+            </div>
           </div>
           <input type="text" class="notes-inline" placeholder="Add notes here…" value="${ex.notes||''}" data-notes-exercise="${exi}">
           <div class="row-between">
@@ -805,8 +914,9 @@ function renderWorkoutTab(){
           ${ex.sets.map((set,si)=>{
             const prev = getPreviousSet(ex.name, si);
             const prevLabel = prev ? `${prev.weight||'–'}kg × ${prev.reps||'–'}` : "–";
+            const typeMeta = SET_TYPE_META[set.type||"working"];
             return `<div class="set-row ${set.done?'done':''}" style="grid-template-columns:${gridCols};">
-              <span class="mono set-num">${si+1}</span>
+              <button class="mono set-num" data-cycle-set-type="${exi}|${si}" style="color:${typeMeta.color};background:none;border:none;cursor:pointer;font-weight:800;" title="Tap to mark warm-up / drop / failure set">${typeMeta.badge}${si+1}</button>
               <span class="mono set-prev">${prevLabel}</span>
               <input type="number" class="mono set-input" value="${set.weight}" data-set-field="${exi}|${si}|weight" placeholder="–">
               <input type="text" class="mono set-input" value="${set.reps}" data-set-field="${exi}|${si}|reps" placeholder="–">
@@ -819,6 +929,26 @@ function renderWorkoutTab(){
       `;}).join("")}
   `;
 }
+
+function formatDuration(ms){
+  const totalSec = Math.max(0, Math.floor(ms/1000));
+  const h = Math.floor(totalSec/3600), m = Math.floor((totalSec%3600)/60), s = totalSec%60;
+  return h>0 ? `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}` : `${m}:${String(s).padStart(2,'0')}`;
+}
+
+let elapsedTimerHandle = null;
+function ensureElapsedTimerRunning(){
+  if(elapsedTimerHandle) return;
+  elapsedTimerHandle = setInterval(()=>{
+    if(!state.session){ clearInterval(elapsedTimerHandle); elapsedTimerHandle = null; return; }
+    const el = document.getElementById("session-elapsed");
+    if(el) el.textContent = formatDuration(Date.now()-state.session.startedAt);
+  }, 1000);
+}
+function stopElapsedTimer(){
+  if(elapsedTimerHandle){ clearInterval(elapsedTimerHandle); elapsedTimerHandle = null; }
+}
+
 
 function renderPlatePopover(exi){
   const target = Number(state.plateTarget||0);
@@ -2139,7 +2269,8 @@ function attachHandlers(){
   // Workout tab
   const startBtn = document.querySelector('[data-action="start-session"]');
   if(startBtn) startBtn.addEventListener("click", ()=>{
-    state.session = { startedAt: Date.now(), exercises: [] };
+    state.session = { startedAt: Date.now(), exercises: [], notes:"" };
+    state.editingSessionId = null;
     applyWakeLock();
     render();
   });
@@ -2190,39 +2321,76 @@ function attachHandlers(){
       if(!routine) return;
       state.session = {
         startedAt: Date.now(),
+        notes: "",
         exercises: routine.exercises.map(e=>({
           name: e.name, notes:"", restDuration:state.settings.defaultRest,
-          sets: Array.from({length:e.sets}, ()=>({weight:"",reps:"",rpe:"",done:false}))
+          sets: Array.from({length:e.sets}, ()=>({weight:"",reps:"",rpe:"",done:false,type:"working"}))
         }))
       };
+      state.editingSessionId = null;
       render();
     });
   });
   const finishBtn = document.querySelector('[data-action="finish-session"]');
   if(finishBtn) finishBtn.addEventListener("click", ()=>{
     if(state.session.exercises.length){
-      const finishedAt = Date.now();
-      const durationMin = Math.max(1, Math.round((finishedAt - state.session.startedAt)/60000));
-      let volume = 0;
-      state.session.exercises.forEach(ex=> ex.sets.forEach(s=>{
-        const w = parseFloat(s.weight); const r = parseFloat(s.reps);
-        if(!isNaN(w) && !isNaN(r)) volume += w*r;
-      }));
-      const workoutId = Date.now();
-      const newPRs = detectPRs(state.session, workoutId, finishedAt, volume);
-      state.workoutLog.unshift({
-        id: workoutId,
-        date: new Date().toISOString().slice(0,10),
-        startedAt: state.session.startedAt,
-        finishedAt, durationMin, volume,
-        exercises: state.session.exercises
-      });
-      if(newPRs.length){
-        state.prs = newPRs.concat(state.prs);
-        state.lastSessionPRs = newPRs;
+      const volume = computeSessionVolume(state.session.exercises);
+
+      if(state.editingSessionId){
+        // Patch the existing history entry in place — no new PR detection (this is a correction,
+        // not a new performance) and no duplicate log entry.
+        const idx = state.workoutLog.findIndex(s=>s.id===state.editingSessionId);
+        if(idx!==-1){
+          state.workoutLog[idx] = Object.assign({}, state.workoutLog[idx], {
+            exercises: state.session.exercises,
+            notes: state.session.notes || "",
+            volume
+          });
+        }
+        state.editingSessionId = null;
+      } else {
+        const finishedAt = Date.now();
+        const durationMin = Math.max(1, Math.round((finishedAt - state.session.startedAt)/60000));
+        const workoutId = Date.now();
+        const newPRs = detectPRs(state.session, workoutId, finishedAt, volume);
+        state.workoutLog.unshift({
+          id: workoutId,
+          date: new Date().toISOString().slice(0,10),
+          startedAt: state.session.startedAt,
+          finishedAt, durationMin, volume,
+          exercises: state.session.exercises,
+          notes: state.session.notes || ""
+        });
+        if(newPRs.length){
+          state.prs = newPRs.concat(state.prs);
+          state.lastSessionPRs = newPRs;
+        }
       }
     }
     state.session = null;
+    applyWakeLock();
+    render();
+  });
+  const cancelEditBtn = document.querySelector('[data-action="cancel-edit-session"]');
+  if(cancelEditBtn) cancelEditBtn.addEventListener("click", ()=>{
+    state.session = null;
+    state.editingSessionId = null;
+    applyWakeLock();
+    render();
+  });
+  const editWorkoutBtn = document.querySelector('[data-action="edit-workout"]');
+  if(editWorkoutBtn) editWorkoutBtn.addEventListener("click", ()=>{
+    const s = state.workoutLog.find(x=>x.id===Number(editWorkoutBtn.dataset.sessionId));
+    if(!s) return;
+    // Deep-clone so edits don't mutate history until Save is pressed
+    state.session = {
+      startedAt: s.startedAt || Date.now(),
+      date: s.date,
+      notes: s.notes || "",
+      exercises: JSON.parse(JSON.stringify(s.exercises))
+    };
+    state.editingSessionId = s.id;
+    state.viewingSessionId = null;
     applyWakeLock();
     render();
   });
@@ -2231,8 +2399,62 @@ function attachHandlers(){
     state.lastSessionPRs = null;
     render();
   });
+  document.querySelectorAll("[data-view-session]").forEach(el=>{
+    el.addEventListener("click", (e)=>{
+      state.viewingSessionId = Number(el.dataset.viewSession);
+      render();
+    });
+  });
+  const closeDetailBtn = document.querySelector('[data-action="close-session-detail"]');
+  if(closeDetailBtn) closeDetailBtn.addEventListener("click", ()=>{
+    state.viewingSessionId = null;
+    render();
+  });
+  const showAllBtn = document.querySelector('[data-action="toggle-show-all-sessions"]');
+  if(showAllBtn) showAllBtn.addEventListener("click", ()=>{
+    state.showAllSessions = !state.showAllSessions;
+    render();
+  });
+  const repeatBtn = document.querySelector('[data-action="repeat-workout"]');
+  if(repeatBtn) repeatBtn.addEventListener("click", ()=>{
+    const s = state.workoutLog.find(x=>x.id===Number(repeatBtn.dataset.sessionId));
+    if(!s) return;
+    state.session = {
+      startedAt: Date.now(),
+      notes: "",
+      exercises: s.exercises.map(e=>({
+        name: e.name, notes:"", restDuration: e.restDuration || state.settings.defaultRest,
+        sets: e.sets.map(()=>({weight:"",reps:"",rpe:"",done:false,type:"working"}))
+      }))
+    };
+    state.viewingSessionId = null;
+    state.editingSessionId = null;
+    applyWakeLock();
+    render();
+  });
+  const saveAsRoutineBtn = document.querySelector('[data-action="save-session-as-routine"]');
+  if(saveAsRoutineBtn) saveAsRoutineBtn.addEventListener("click", ()=>{
+    const s = state.workoutLog.find(x=>x.id===Number(saveAsRoutineBtn.dataset.sessionId));
+    if(!s) return;
+    state.routineBuilder = {
+      name: "",
+      exercises: s.exercises.map(e=>({ name: e.name, sets: e.sets.length || 1 }))
+    };
+    state.viewingSessionId = null;
+    render();
+  });
+  const delConfirmedBtn = document.querySelector('[data-action="delete-session-confirmed"]');
+  if(delConfirmedBtn) delConfirmedBtn.addEventListener("click", ()=>{
+    if(!confirm("Delete this workout permanently? This can't be undone.")) return;
+    const id = Number(delConfirmedBtn.dataset.sessionId);
+    state.workoutLog = state.workoutLog.filter(s=>s.id !== id);
+    state.viewingSessionId = null;
+    render();
+  });
   document.querySelectorAll("[data-del-session]").forEach(el=>{
-    el.addEventListener("click", ()=>{
+    el.addEventListener("click", (e)=>{
+      e.stopPropagation(); // don't also trigger the row's data-view-session click
+      if(!confirm("Delete this workout permanently? This can't be undone.")) return;
       state.workoutLog = state.workoutLog.filter(s=>s.id !== Number(el.dataset.delSession));
       render();
     });
@@ -2242,7 +2464,7 @@ function attachHandlers(){
     const picker = document.getElementById("ex-picker");
     if(picker && picker.value){
       state.session.exercises.push({ name: picker.value, notes:"", restDuration:state.settings.defaultRest,
-        sets: [{ weight:"", reps:"", rpe:"", done:false }] });
+        sets: [{ weight:"", reps:"", rpe:"", done:false, type:"working" }] });
       render();
     }
   });
@@ -2251,6 +2473,37 @@ function attachHandlers(){
       state.session.exercises.splice(Number(el.dataset.delExercise),1);
       render();
     });
+  });
+  document.querySelectorAll("[data-move-exercise-up]").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      const i = Number(el.dataset.moveExerciseUp);
+      if(i<=0) return;
+      const ex = state.session.exercises;
+      [ex[i-1], ex[i]] = [ex[i], ex[i-1]];
+      render();
+    });
+  });
+  document.querySelectorAll("[data-move-exercise-down]").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      const i = Number(el.dataset.moveExerciseDown);
+      const ex = state.session.exercises;
+      if(i>=ex.length-1) return;
+      [ex[i], ex[i+1]] = [ex[i+1], ex[i]];
+      render();
+    });
+  });
+  document.querySelectorAll("[data-cycle-set-type]").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      const [exi,si] = el.dataset.cycleSetType.split("|");
+      const set = state.session.exercises[Number(exi)].sets[Number(si)];
+      set.type = nextSetType(set.type);
+      render();
+    });
+  });
+  const sessionNotesEl = document.getElementById("session-notes");
+  if(sessionNotesEl) sessionNotesEl.addEventListener("change", ()=>{
+    state.session.notes = sessionNotesEl.value;
+    persist();
   });
   document.querySelectorAll("[data-notes-exercise]").forEach(el=>{
     el.addEventListener("change", ()=>{
@@ -2283,7 +2536,7 @@ function attachHandlers(){
     el.addEventListener("click", ()=>{
       const ex = state.session.exercises[Number(el.dataset.addSet)];
       const last = ex.sets[ex.sets.length-1];
-      ex.sets.push({ weight: last?last.weight:"", reps: last?last.reps:"", rpe:"", done:false });
+      ex.sets.push({ weight: last?last.weight:"", reps: last?last.reps:"", rpe:"", done:false, type:"working" });
       render();
     });
   });
@@ -2555,6 +2808,20 @@ window.addEventListener("error", (e)=>{
 });
 window.addEventListener("unhandledrejection", (e)=>{
   console.error("Ignyt unhandled promise rejection:", e.reason);
+});
+
+// Accidental-exit protection. Note: an active session is already persisted to
+// localStorage on every render, so closing/reloading never actually loses data —
+// this is just an extra confirmation prompt to avoid an accidental navigation
+// interrupting a workout in progress.
+window.addEventListener("beforeunload", (e)=>{
+  const hasData = state.session && state.session.exercises.some(ex=>
+    ex.sets.some(s=> s.weight || s.reps)
+  );
+  if(hasData){
+    e.preventDefault();
+    e.returnValue = "";
+  }
 });
 
 try{
