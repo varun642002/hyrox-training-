@@ -1010,7 +1010,7 @@ function renderBodyTab(){
     <div class="info-box" style="padding:14px;">
       <div class="grid2">
         <div><label style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);">Weight (kg)</label>
-          <input type="number" id="p-weight" value="${p.weight}" style="display:block;width:100%;background:var(--surface-alt);border-radius:8px;padding:8px;margin-top:4px;font-size:13px;color:var(--accent);font-weight:700;"></div>
+          <div style="padding:8px;margin-top:4px;font-size:13px;color:var(--accent);font-weight:700;">${p.weight} <span style="font-size:10px;color:var(--muted);font-weight:400;">(from log)</span></div></div>
         <div><label style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);">Height (cm)</label>
           <input type="number" id="p-height" value="${p.height}" style="display:block;width:100%;background:var(--surface-alt);border-radius:8px;padding:8px;margin-top:4px;font-size:13px;color:var(--text);"></div>
         <div><label style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);">Age</label>
@@ -1995,10 +1995,8 @@ function attachHandlers(){
   });
 
   // Body tab — profile (single source of truth)
-  const pw = document.getElementById("p-weight");
   const ph = document.getElementById("p-height");
   const pa = document.getElementById("p-age");
-  if(pw) pw.addEventListener("change", ()=>{ state.profile.weight = Number(pw.value)||state.profile.weight; render(); });
   if(ph) ph.addEventListener("change", ()=>{ state.profile.height = Number(ph.value)||state.profile.height; render(); });
   if(pa) pa.addEventListener("change", ()=>{ state.profile.age = Number(pa.value)||state.profile.age; render(); });
   document.querySelectorAll("[data-profile-gender]").forEach(el=>{
@@ -2032,6 +2030,7 @@ function attachHandlers(){
   document.querySelectorAll("[data-del-body]").forEach(el=>{
     el.addEventListener("click", ()=>{
       state.bodylog = state.bodylog.filter(e=>e.id !== Number(el.dataset.delBody));
+      if(state.bodylog.length) state.profile.weight = Number(state.bodylog[0].weight) || state.profile.weight;
       render();
     });
   });
@@ -2106,7 +2105,7 @@ function attachHandlers(){
   if(applyProfileBtn) applyProfileBtn.addEventListener("click", ()=>{
     const c = state.calc;
     state.profile.age = c.age; state.profile.gender = c.gender;
-    state.profile.height = c.height; state.profile.weight = c.weight;
+    state.profile.height = c.height;
     if(c.activityMultiplier) state.profile.activityMultiplier = c.activityMultiplier;
     if(c.goalDelta!=null) state.profile.goalDelta = c.goalDelta;
     render();
