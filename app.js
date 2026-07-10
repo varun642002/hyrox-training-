@@ -18,7 +18,14 @@ const LS = {
 function phaseFor(w){ if(w<=2)return"base"; if(w<=4)return"build"; if(w<=6)return"load"; if(w===7)return"peak"; return"deload"; }
 const PHASE_LABEL = {base:"BASE — FORM FIRST", build:"BUILD — ADD LOAD", load:"LOAD — RAISE INTENSITY", peak:"PEAK — HEAVIEST WEEK", deload:"DELOAD — BACK OFF"};
 
-function buildWeek(w){
+const LEVELS = {
+  beginner:    { label:"Beginner",    note:"Lighter volume, more technique focus, longer rest.", vol:"lower" },
+  intermediate:{ label:"Intermediate",note:"Balanced strength + conditioning (your current plan).", vol:"standard" },
+  advanced:    { label:"Advanced",    note:"Higher volume, heavier loads, race-pace conditioning.", vol:"higher" }
+};
+
+function buildWeek(w, level){
+  level = level || "intermediate";
   const p = phaseFor(w);
   const T = {
     base:{squat:"4x6 @ RPE 6-7",rdl:"3x8 @ moderate",lunge:"3x12/leg, light DB",bench:"4x6 @ RPE 6-7",row:"4x8 @ moderate",ohp:"3x8 @ moderate",carry:"4x40m, moderate load",intervals:"6x400m hard, 90s rest",z2:"35 min steady, conversational",sled:"3 rounds, light-mod, focus technique",wallball:"3x15 @ 6-9kg",burpee:"3x8 broad jump burpees",ski:"3x200m",pallof:"3x10/side, light band",hanging:"3x8-10 knee raises",situp:"3x10 bodyweight"},
@@ -27,32 +34,53 @@ function buildWeek(w){
     peak:{squat:"5x5 @ +5%, RPE 8",rdl:"4x6 @ +5% load",lunge:"4x12/leg, heaviest DB",bench:"5x5 @ +5% load",row:"4x10 @ +5% load",ohp:"4x6 @ +5% load",carry:"5x50m, heaviest load",intervals:"6x800m hard, 2min rest",z2:"45-50 min steady",sled:"5 rounds, near race load",wallball:"5x15-20 @ 9kg",burpee:"4x10-12 broad jump burpees",ski:"5x300m",pallof:"3x12/side, heaviest band",hanging:"3x12-15 straight leg raises",situp:"4x15 weighted"},
     deload:{squat:"3x5 @ light, RPE 5",rdl:"3x6 @ light",lunge:"2x12/leg, light",bench:"3x5 @ light",row:"3x8 @ light",ohp:"3x6 @ light",carry:"3x40m, moderate",intervals:"4x400m moderate, full recovery",z2:"25 min easy",sled:"2 rounds, light, technique refresh",wallball:"3x12 @ 6kg",burpee:"2x8",ski:"3x200m easy",pallof:"2x10/side, light",hanging:"2x8 knee raises",situp:"2x10 bodyweight"}
   }[p];
+
+  // Level scaling: beginner strips one set / eases conditioning; advanced adds a set / extends conditioning
+  function scale(presc, kind){
+    if(level==="intermediate") return presc;
+    const m = /^(\d+)x/.exec(presc);
+    if(level==="beginner"){
+      if(m){ const sets=Math.max(2, Number(m[1])-1); presc = presc.replace(/^\d+x/, sets+"x"); }
+      presc = presc.replace(/(\d+)x(\d+)m/, (s,r,d)=> r+"x"+d+"m"); // carries stay
+      if(kind==="cond") presc += ", longer rest";
+      return presc;
+    }
+    if(level==="advanced"){
+      if(m){ const sets=Number(m[1])+1; presc = presc.replace(/^\d+x/, sets+"x"); }
+      if(kind==="cond") presc += ", minimal rest";
+      return presc;
+    }
+    return presc;
+  }
+
   return {
-    week:w, phase:p, phaseLabel:PHASE_LABEL[p],
+    week:w, phase:p, phaseLabel:PHASE_LABEL[p], level,
     days:[
       {day:"Day 1",session:"Lower Body Strength",exercises:[
-        {name:"Back Squat",presc:T.squat},{name:"Romanian Deadlift",presc:T.rdl},
-        {name:"Walking Lunges",presc:T.lunge},{name:"Plank",presc:"3x45s"},
-        {name:"Pallof Press",presc:T.pallof,note:"Core finisher — anti-rotation, resists sled drift"}]},
+        {name:"Back Squat",presc:scale(T.squat)},{name:"Romanian Deadlift",presc:scale(T.rdl)},
+        {name:"Walking Lunges",presc:scale(T.lunge)},{name:"Plank",presc:"3x45s"},
+        {name:"Pallof Press",presc:scale(T.pallof),note:"Core finisher — anti-rotation, resists sled drift"}]},
       {day:"Day 2",session:"Run Intervals",exercises:[
-        {name:"Warm-up",presc:"10 min easy jog"},{name:"Intervals",presc:T.intervals},
+        {name:"Warm-up",presc:"10 min easy jog"},{name:"Intervals",presc:scale(T.intervals,"cond")},
         {name:"Cool-down",presc:"10 min easy jog"}]},
       {day:"Day 3",session:"Upper Body + Carries",exercises:[
-        {name:"Bench Press",presc:T.bench},{name:"Bent-Over Row",presc:T.row},
-        {name:"Overhead Press",presc:T.ohp},{name:"Farmer's Carry",presc:T.carry},
-        {name:"Hanging Leg Raise",presc:T.hanging,note:"Core finisher — swap for dead bug if grip is fried"}]},
+        {name:"Bench Press",presc:scale(T.bench)},{name:"Bent-Over Row",presc:scale(T.row)},
+        {name:"Overhead Press",presc:scale(T.ohp)},{name:"Farmer's Carry",presc:scale(T.carry)},
+        {name:"Hanging Leg Raise",presc:scale(T.hanging),note:"Core finisher — swap for dead bug if grip is fried"}]},
       {day:"Day 4",session:"Zone 2 Steady State",exercises:[
-        {name:"Row / Ski / Run",presc:T.z2,note:"Stay conversational — don't drift into threshold"}]},
+        {name:"Row / Ski / Run",presc:scale(T.z2),note:"Stay conversational — don't drift into threshold"}]},
       {day:"Day 5",session:"Hyrox Station Circuit",exercises:[
-        {name:"Sled Push/Pull",presc:T.sled},{name:"Wall Balls",presc:T.wallball},
-        {name:"Burpee Broad Jumps",presc:T.burpee},{name:"Ski Erg",presc:T.ski},
-        {name:"Weighted Sit-Up",presc:T.situp,note:"Core finisher — race-specific, done under fatigue"}]},
+        {name:"Sled Push/Pull",presc:scale(T.sled,"cond")},{name:"Wall Balls",presc:scale(T.wallball,"cond")},
+        {name:"Burpee Broad Jumps",presc:scale(T.burpee,"cond")},{name:"Ski Erg",presc:scale(T.ski,"cond")},
+        {name:"Weighted Sit-Up",presc:scale(T.situp),note:"Core finisher — race-specific, done under fatigue"}]},
       {day:"Day 6",session:"Optional — Easy Movement",exercises:[
         {name:"Walk / Mobility / Light Swim",presc:"20-30 min, low intensity",note:"Skip if fatigue score is high"}]}
     ]
   };
 }
-const WEEKS = Array.from({length:8},(_,i)=>buildWeek(i+1));
+// WEEKS is rebuilt for the active level whenever it changes
+let WEEKS = Array.from({length:8},(_,i)=>buildWeek(i+1, LS.get("hx_active_level","intermediate")));
+function rebuildWeeks(){ WEEKS = Array.from({length:8},(_,i)=>buildWeek(i+1, state.activeLevel)); }
 
 /* ---------- Exercise library ---------- */
 const LIBRARY = {
@@ -170,9 +198,15 @@ function svg(name, size=19){ return `<svg width="${size}" height="${size}" viewB
 const state = {
   tab: LS.get("hx_tab","plan"),
   activeWeek: LS.get("hx_active_week",1),
+  activeLevel: LS.get("hx_active_level","intermediate"),
   activeDayIdx: 0,
   completed: LS.get("hx_completed",{}),
-  nutrition: Object.assign({bodyweight:101,maintenance:2900,deficit:400,proteinPct:30,carbPct:45,fatPct:25,fibreTarget:30},
+  // SHARED PROFILE — single source of truth for weight/height/age/gender/activity/goal
+  profile: Object.assign({
+    weight:101, height:180, age:25, gender:"male",
+    activityMultiplier:1.465, goalDelta:-400
+  }, LS.get("hx_profile",{})),
+  nutrition: Object.assign({proteinPct:30,carbPct:45,fatPct:25,fibreTarget:30},
     LS.get("hx_nutrition",{})),
   mealOpen: null,
   bodylog: LS.get("hx_bodylog",[]),
@@ -182,9 +216,9 @@ const state = {
   routines: LS.get("hx_routines",[]),
   routineBuilder: null,
   calc: LS.get("hx_calc", {
-    activeCalc:"bmr", age:25, gender:"male", height:180, weight:101,
-    neck:38, waist:90, hip:95, restingHR:60, activityMultiplier:1.465, result:null,
-    goalDelta:0, bust:90, bwaist:75, highHip:85, bhip:95
+    activeCalc:"bmr", result:null,
+    neck:38, waist:90, hip:95, restingHR:60,
+    bust:90, bwaist:75, highHip:85, bhip:95
   }),
   settings: LS.get("hx_settings", {
     sounds:true, vibration:true, defaultRest:90, keepAwake:false,
@@ -202,9 +236,20 @@ const state = {
   timer: null
 };
 
+/* ---------- Derived values from shared profile (auto-recalc everywhere) ---------- */
+function profileMaintenance(){
+  const p = state.profile;
+  return Math.round(calcBMR(p.age, p.gender, p.height, p.weight) * p.activityMultiplier);
+}
+function profileCalorieTarget(){
+  return Math.round(profileMaintenance() + state.profile.goalDelta);
+}
+
 function persist(){
   LS.set("hx_tab", state.tab);
   LS.set("hx_active_week", state.activeWeek);
+  LS.set("hx_active_level", state.activeLevel);
+  LS.set("hx_profile", state.profile);
   LS.set("hx_completed", state.completed);
   LS.set("hx_nutrition", state.nutrition);
   LS.set("hx_bodylog", state.bodylog);
@@ -272,6 +317,14 @@ function renderPlanTab(){
       <span class="eyebrow-label" style="margin:0;">Race Prep — Phase 1</span>
       <span class="phase-pill">${week.phaseLabel}</span>
     </div>
+    <div class="level-rail" style="display:flex;gap:6px;margin-bottom:12px;">
+      ${Object.entries(LEVELS).map(([key,lv])=>`
+        <button class="level-chip ${state.activeLevel===key?'active':''}" data-level="${key}"
+          style="flex:1;padding:9px 6px;border-radius:10px;border:1.5px solid ${state.activeLevel===key?'var(--accent)':'var(--border)'};background:${state.activeLevel===key?'rgba(255,90,31,.12)':'var(--surface)'};color:${state.activeLevel===key?'var(--accent)':'var(--muted)'};font-weight:800;font-size:12px;cursor:pointer;">
+          ${lv.label}
+        </button>`).join("")}
+    </div>
+    <div class="info-box" style="font-size:11px;color:var(--muted);margin-bottom:12px;padding:8px 12px;">${LEVELS[state.activeLevel].note}</div>
     <div class="week-rail">
       ${WEEKS.map(w=>{
         const pct = weekProgress(w);
@@ -719,6 +772,11 @@ function genderToggle(id, current){
 
 function renderCalculators(){
   const c = state.calc;
+  // Pull shared profile values as the defaults shown in calculators
+  c.age = state.profile.age; c.gender = state.profile.gender;
+  c.height = state.profile.height; c.weight = state.profile.weight;
+  if(c.activityMultiplier==null) c.activityMultiplier = state.profile.activityMultiplier;
+  if(c.goalDelta==null) c.goalDelta = state.profile.goalDelta;
   const active = c.activeCalc;
   let fields = "", result = "";
 
@@ -759,7 +817,7 @@ function renderCalculators(){
         <div class="stat-card"><div class="stat-label">Goal Calories</div><div class="stat-value" style="color:var(--accent);">${Math.round(goalKcal)}<span class="stat-unit">kcal</span></div></div>
       </div>
       <div class="info-box" style="text-align:center;padding:12px;margin-top:8px;">
-        <button class="btn btn-steel" data-action="use-maintenance" style="padding:8px 16px;">Use as Maintenance Calories</button>
+        <button class="btn btn-steel" data-action="apply-calc-profile" style="padding:8px 16px;">Apply These Stats to Profile</button>
       </div>`;
     }
   }
@@ -926,8 +984,73 @@ function renderBodyTab(){
   const delta = (first && latest) ? (Number(latest.weight)-Number(first.weight)).toFixed(1) : null;
   const fieldSm = (id,label,ph,color) => `<div><label style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);">${label}</label>
     <input type="number" id="${id}" placeholder="${ph}" style="display:block;width:100%;background:var(--surface-alt);border-radius:8px;padding:8px;margin-top:4px;font-size:13px;color:${color};"></div>`;
+
+  const p = state.profile;
+  const maint = profileMaintenance();
+  const target = profileCalorieTarget();
+
+  // Body composition: prefer latest logged body fat %, else estimate via Navy from latest measurements
+  let bfPct = null;
+  const latestBF = entries.find(e=>e.bodyfat);
+  const latestWaist = entries.find(e=>e.waist);
+  if(latestBF) bfPct = Number(latestBF.bodyfat);
+  else if(latestWaist && state.calc.neck){
+    bfPct = calcBodyFatNavy(p.gender, p.height, state.calc.neck, Number(latestWaist.waist), state.calc.hip);
+  }
+  const lbmBoer = calcLBM(p.gender, p.height, p.weight).boer;
+  let fatMass = null, leanMass = null, muscleMass = null;
+  if(bfPct!=null && bfPct>0){
+    fatMass = p.weight * bfPct/100;
+    leanMass = p.weight - fatMass;
+    muscleMass = leanMass * 0.535; // skeletal muscle ≈ 53.5% of lean mass (Lee et al. estimate)
+  }
+
   return `
-    <div class="eyebrow-label" style="margin-top:4px;">Log Entry</div>
+    <div class="eyebrow-label" style="margin-top:4px;">Your Profile</div>
+    <div class="info-box" style="padding:14px;">
+      <div class="grid2">
+        <div><label style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);">Weight (kg)</label>
+          <input type="number" id="p-weight" value="${p.weight}" style="display:block;width:100%;background:var(--surface-alt);border-radius:8px;padding:8px;margin-top:4px;font-size:13px;color:var(--accent);font-weight:700;"></div>
+        <div><label style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);">Height (cm)</label>
+          <input type="number" id="p-height" value="${p.height}" style="display:block;width:100%;background:var(--surface-alt);border-radius:8px;padding:8px;margin-top:4px;font-size:13px;color:var(--text);"></div>
+        <div><label style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);">Age</label>
+          <input type="number" id="p-age" value="${p.age}" style="display:block;width:100%;background:var(--surface-alt);border-radius:8px;padding:8px;margin-top:4px;font-size:13px;color:var(--text);"></div>
+        <div><label style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);">Gender</label>
+          <div style="display:flex;gap:6px;margin-top:4px;">
+            <button class="cat-chip ${p.gender==='male'?'active':''}" data-profile-gender="male" style="flex:1;text-align:center;">Male</button>
+            <button class="cat-chip ${p.gender==='female'?'active':''}" data-profile-gender="female" style="flex:1;text-align:center;">Female</button>
+          </div></div>
+      </div>
+      <label style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);display:block;margin:10px 0 4px;">Activity Level</label>
+      <select class="select-input" id="p-activity">
+        ${ACTIVITY_MULTIPLIERS.map(a=>`<option value="${a.mult}" ${p.activityMultiplier===a.mult?'selected':''}>${a.label}</option>`).join("")}
+      </select>
+      <label style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);display:block;margin:6px 0 4px;">Goal</label>
+      <select class="select-input" id="p-goal" style="margin-bottom:0;">
+        ${GOAL_OPTIONS.map(g=>`<option value="${g.delta}" ${p.goalDelta===g.delta?'selected':''}>${g.label}</option>`).join("")}
+      </select>
+    </div>
+
+    <div class="grid2" style="margin-top:10px;margin-bottom:6px;">
+      <div class="stat-card"><div class="stat-label">Maintenance</div><div class="stat-value" style="color:var(--steel);">${maint}<span class="stat-unit">kcal</span></div></div>
+      <div class="stat-card"><div class="stat-label">Daily Calorie Goal</div><div class="stat-value" style="color:var(--accent);">${target}<span class="stat-unit">kcal</span></div></div>
+    </div>
+    <div class="info-box" style="font-size:12px;">These numbers, plus your protein/carb/fat targets in the Fuel tab, recalculate automatically whenever you change your weight or goal here.</div>
+
+    <div class="eyebrow-label">Body Composition</div>
+    <div class="info-box" style="padding:14px;">
+      ${bfPct!=null ? `<div class="grid2">
+        <div class="stat-card"><div class="stat-label">Body Fat</div><div class="stat-value" style="color:var(--accent);">${bfPct.toFixed(1)}<span class="stat-unit">%</span></div></div>
+        <div class="stat-card"><div class="stat-label">Fat Mass</div><div class="stat-value" style="color:var(--text);">${fatMass.toFixed(1)}<span class="stat-unit">kg</span></div></div>
+        <div class="stat-card"><div class="stat-label">Lean Body Mass</div><div class="stat-value" style="color:var(--steel);">${leanMass.toFixed(1)}<span class="stat-unit">kg</span></div></div>
+        <div class="stat-card"><div class="stat-label">Est. Muscle Mass</div><div class="stat-value" style="color:var(--mint);">${muscleMass.toFixed(1)}<span class="stat-unit">kg</span></div></div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:8px;">Fat/lean/muscle computed from your body-fat %${latestBF?' (from your latest log)':' (estimated from waist + neck via US Navy method)'}. Muscle mass is a lean-mass-based estimate, not a scan.</div>`
+      : `<div style="font-size:13px;color:var(--muted);">Log a <b style="color:var(--text);">Body Fat %</b> below — or a waist measurement (with neck set in the Body Fat calculator) — to see fat mass, lean mass, and estimated muscle mass here.</div>
+      <div class="stat-card" style="margin-top:10px;"><div class="stat-label">Lean Body Mass (Boer estimate)</div><div class="stat-value" style="color:var(--steel);">${lbmBoer.toFixed(1)}<span class="stat-unit">kg</span></div></div>`}
+    </div>
+
+    <div class="eyebrow-label">Log Entry</div>
     <div class="info-box" style="padding:14px;">
       <div class="grid2">
         <div><label style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);">Date</label>
@@ -940,7 +1063,8 @@ function renderBodyTab(){
         ${fieldSm("b-arms","Arms (cm)","","var(--text)")}
         ${fieldSm("b-bodyfat","Body Fat (%)","","var(--text)")}
       </div>
-      <button class="btn btn-accent btn-block" data-action="log-body" style="margin-top:10px;">Log Entry</button>
+      <div style="font-size:11px;color:var(--muted);margin:8px 0;">Logging a weight here updates your profile weight and recalculates calories & macros everywhere.</div>
+      <button class="btn btn-accent btn-block" data-action="log-body">Log Entry</button>
     </div>
 
     ${delta!==null?`<div class="field" style="margin-top:12px;"><label>Total weight change</label>
@@ -983,7 +1107,7 @@ function todayActivityKcal(){
     .reduce((a,s)=>a + (s.durationMin||0)*ACTIVITY_KCAL_PER_MIN, 0);
 }
 function todayBurned(){
-  return Math.round(state.nutrition.maintenance + todayActivityKcal());
+  return Math.round(profileMaintenance() + todayActivityKcal());
 }
 function todayMacros(){
   const t = {protein:0, carbs:0, fat:0, fibre:0};
@@ -997,7 +1121,7 @@ function todayMacros(){
 }
 function macroTargets(){
   const n = state.nutrition;
-  const kcal = n.maintenance - n.deficit;
+  const kcal = profileCalorieTarget();
   return {
     kcal,
     protein: kcal*(n.proteinPct/100)/4,
@@ -1031,7 +1155,7 @@ function macroBar(label, val, target, color, unit){
 function renderNutritionTab(){
   const n = state.nutrition;
   const targets = macroTargets();
-  const weeklyLoss = ((n.deficit*7)/7700).toFixed(2);
+  const weeklyLoss = ((Math.abs(state.profile.goalDelta)*7)/7700).toFixed(2);
 
   const eaten = todayEaten();
   const burned = todayBurned();
@@ -1054,7 +1178,7 @@ function renderNutritionTab(){
     <div class="info-box" style="text-align:center;padding:14px;margin-bottom:16px;background:${netDeficit>=0?'rgba(62,207,142,.08)':'rgba(255,90,31,.08)'};">
       <div class="stat-label">${netDeficit>=0?'Deficit Created':'Surplus (over target)'}</div>
       <div class="mono" style="font-weight:900;font-size:26px;color:${netDeficit>=0?'var(--mint)':'var(--accent)'};margin-top:2px;">${netDeficit>=0?'':'+'}${Math.abs(netDeficit)}<span style="font-size:13px;font-weight:700;color:var(--muted);margin-left:4px;">kcal</span></div>
-      <div style="font-size:11px;color:var(--muted);margin-top:4px;">Burned = ${n.maintenance} maintenance + ~${activityKcal} workout est.</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px;">Burned = ${profileMaintenance()} maintenance + ~${activityKcal} workout est.</div>
     </div>
 
     <div class="eyebrow-label">Macronutrients Today</div>
@@ -1114,9 +1238,9 @@ function renderNutritionTab(){
     </div>
 
     <div class="eyebrow-label">Calorie & Macro Budget</div>
-    <div class="field"><label>Bodyweight</label><div><input type="number" id="n-bw" value="${n.bodyweight}"><span class="unit">kg</span></div></div>
-    <div class="field"><label>Maintenance calories</label><div><input type="number" id="n-maint" value="${n.maintenance}"><span class="unit">kcal</span></div></div>
-    <div class="field"><label>Target deficit</label><div><input type="number" id="n-def" value="${n.deficit}"><span class="unit">kcal</span></div></div>
+    <div class="info-box" style="padding:12px 14px;margin-bottom:8px;font-size:12px;color:var(--muted);">
+      Your calorie target updates automatically from your weight, stats, and goal (set in the <b style="color:var(--steel);">Body</b> tab). Maintenance right now: <b class="mono" style="color:var(--text);">${profileMaintenance()} kcal</b>.
+    </div>
     <div class="field"><label>Protein %</label><div><input type="number" id="n-proteinpct" value="${n.proteinPct}"><span class="unit">%</span></div></div>
     <div class="field"><label>Carb %</label><div><input type="number" id="n-carbpct" value="${n.carbPct}"><span class="unit">%</span></div></div>
     <div class="field"><label>Fat %</label><div><input type="number" id="n-fatpct" value="${n.fatPct}"><span class="unit">%</span></div></div>
@@ -1638,6 +1762,13 @@ function attachHandlers(){
   });
 
   // Plan tab
+  document.querySelectorAll("[data-level]").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      state.activeLevel = el.dataset.level;
+      rebuildWeeks();
+      render();
+    });
+  });
   document.querySelectorAll("[data-week]").forEach(el=>{
     el.addEventListener("click", ()=>{ state.activeWeek = Number(el.dataset.week); state.activeDayIdx = 0; render(); });
   });
@@ -1863,11 +1994,26 @@ function attachHandlers(){
     render();
   });
 
-  // Body tab
+  // Body tab — profile (single source of truth)
+  const pw = document.getElementById("p-weight");
+  const ph = document.getElementById("p-height");
+  const pa = document.getElementById("p-age");
+  if(pw) pw.addEventListener("change", ()=>{ state.profile.weight = Number(pw.value)||state.profile.weight; render(); });
+  if(ph) ph.addEventListener("change", ()=>{ state.profile.height = Number(ph.value)||state.profile.height; render(); });
+  if(pa) pa.addEventListener("change", ()=>{ state.profile.age = Number(pa.value)||state.profile.age; render(); });
+  document.querySelectorAll("[data-profile-gender]").forEach(el=>{
+    el.addEventListener("click", ()=>{ state.profile.gender = el.dataset.profileGender; render(); });
+  });
+  const pact = document.getElementById("p-activity");
+  if(pact) pact.addEventListener("change", ()=>{ state.profile.activityMultiplier = Number(pact.value); render(); });
+  const pgoal = document.getElementById("p-goal");
+  if(pgoal) pgoal.addEventListener("change", ()=>{ state.profile.goalDelta = Number(pgoal.value); render(); });
+
   const logBodyBtn = document.querySelector('[data-action="log-body"]');
   if(logBodyBtn) logBodyBtn.addEventListener("click", ()=>{
     const weight = document.getElementById("b-weight").value;
     if(!weight) return;
+    const bf = document.getElementById("b-bodyfat").value;
     state.bodylog.unshift({
       id: Date.now(),
       date: document.getElementById("b-date").value,
@@ -1877,8 +2023,10 @@ function attachHandlers(){
       waist: document.getElementById("b-waist").value,
       chest: document.getElementById("b-chest").value,
       arms: document.getElementById("b-arms").value,
-      bodyfat: document.getElementById("b-bodyfat").value
+      bodyfat: bf
     });
+    // Weight logged here becomes the single source of truth -> recalcs calories/macros everywhere
+    state.profile.weight = Number(weight) || state.profile.weight;
     render();
   });
   document.querySelectorAll("[data-del-body]").forEach(el=>{
@@ -1954,12 +2102,14 @@ function attachHandlers(){
     }
     render();
   });
-  const useMaintBtn = document.querySelector('[data-action="use-maintenance"]');
-  if(useMaintBtn) useMaintBtn.addEventListener("click", ()=>{
-    if(state.calc.result && state.calc.result.type==="calorie"){
-      state.nutrition.maintenance = Math.round(state.calc.result.tdee);
-      render();
-    }
+  const applyProfileBtn = document.querySelector('[data-action="apply-calc-profile"]');
+  if(applyProfileBtn) applyProfileBtn.addEventListener("click", ()=>{
+    const c = state.calc;
+    state.profile.age = c.age; state.profile.gender = c.gender;
+    state.profile.height = c.height; state.profile.weight = c.weight;
+    if(c.activityMultiplier) state.profile.activityMultiplier = c.activityMultiplier;
+    if(c.goalDelta!=null) state.profile.goalDelta = c.goalDelta;
+    render();
   });
 
   // Progress tab
@@ -2014,13 +2164,10 @@ function attachHandlers(){
   });
 
   // Nutrition tab
-  ["n-bw","n-maint","n-def","n-proteinpct","n-carbpct","n-fatpct","n-fibre"].forEach(id=>{
+  ["n-proteinpct","n-carbpct","n-fatpct","n-fibre"].forEach(id=>{
     const el = document.getElementById(id);
     if(el) el.addEventListener("change", ()=>{
       const g = (i)=>{ const e=document.getElementById(i); return e?Number(e.value):0; };
-      state.nutrition.bodyweight = g("n-bw");
-      state.nutrition.maintenance = g("n-maint");
-      state.nutrition.deficit = g("n-def");
       state.nutrition.proteinPct = g("n-proteinpct");
       state.nutrition.carbPct = g("n-carbpct");
       state.nutrition.fatPct = g("n-fatpct");
@@ -2033,6 +2180,7 @@ function attachHandlers(){
 /* =========================================================
    BOOTSTRAP
 ========================================================= */
+rebuildWeeks();
 render();
 
 if("serviceWorker" in navigator){
