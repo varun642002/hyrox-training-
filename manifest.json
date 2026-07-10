@@ -1,7 +1,7 @@
 {
-  "name": "Hyrox Prep Tracker",
-  "short_name": "Hyrox Prep",
-  "description": "Full training tracker — strength, mobility, cardio, custom workouts, body measurements, and Hyrox race prep.",
+  "name": "Ignyt",
+  "short_name": "Ignyt",
+  "description": "Ignyt — full training system: strength, cardio, mobility, nutrition, and Hyrox race prep.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

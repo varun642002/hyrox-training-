@@ -172,7 +172,9 @@ const state = {
   activeWeek: LS.get("hx_active_week",1),
   activeDayIdx: 0,
   completed: LS.get("hx_completed",{}),
-  nutrition: LS.get("hx_nutrition",{bodyweight:101,maintenance:2900,deficit:400}),
+  nutrition: Object.assign({bodyweight:101,maintenance:2900,deficit:400,proteinPct:30,carbPct:45,fatPct:25,fibreTarget:30},
+    LS.get("hx_nutrition",{})),
+  mealOpen: null,
   bodylog: LS.get("hx_bodylog",[]),
   customExercises: LS.get("hx_custom_exercises",[]),
   workoutLog: LS.get("hx_workout_log",[]),
@@ -222,7 +224,7 @@ function render(){
     <header class="app-header" style="display:flex;align-items:flex-end;justify-content:space-between;">
       <div>
         <div class="eyebrow-row"><div class="eyebrow-dash"></div><span class="eyebrow">Full Training System</span></div>
-        <h1 class="title">HYROX PREP</h1>
+        <h1 class="title">IGNYT</h1>
       </div>
       <button data-nav="settings" style="background:${state.tab==='settings'?'var(--surface-alt)':'none'};border:none;color:${state.tab==='settings'?'var(--accent)':'var(--muted)'};padding:8px;border-radius:10px;cursor:pointer;">${svg('gear',22)}</button>
     </header>
@@ -962,14 +964,18 @@ function renderBodyTab(){
 }
 
 /* =========================================================
-   NUTRITION TAB — auto calories eaten / burned / deficit
+   NUTRITION TAB — meals, macro budgets, insights
 ========================================================= */
 const ACTIVITY_KCAL_PER_MIN = 8; // rough estimate for mixed strength/conditioning work
+const MEALS = ["Breakfast","Morning Snack","Lunch","Evening Snack","Dinner"];
+// Default share of daily calories per meal (matches typical 25/12.5/25/12.5/25 split)
+const MEAL_SHARE = {"Breakfast":0.25,"Morning Snack":0.125,"Lunch":0.25,"Evening Snack":0.125,"Dinner":0.25};
 
 function todayStr(){ return new Date().toISOString().slice(0,10); }
 
+function foodsForDate(dateStr){ return state.foodLog.filter(f=>f.date===dateStr); }
 function todayEaten(){
-  return state.foodLog.filter(f=>f.date===todayStr()).reduce((a,f)=>a+Number(f.calories||0),0);
+  return foodsForDate(todayStr()).reduce((a,f)=>a+Number(f.calories||0),0);
 }
 function todayActivityKcal(){
   return state.workoutLog
@@ -979,58 +985,155 @@ function todayActivityKcal(){
 function todayBurned(){
   return Math.round(state.nutrition.maintenance + todayActivityKcal());
 }
+function todayMacros(){
+  const t = {protein:0, carbs:0, fat:0, fibre:0};
+  foodsForDate(todayStr()).forEach(f=>{
+    t.protein += Number(f.protein||0);
+    t.carbs += Number(f.carbs||0);
+    t.fat += Number(f.fat||0);
+    t.fibre += Number(f.fibre||0);
+  });
+  return t;
+}
+function macroTargets(){
+  const n = state.nutrition;
+  const kcal = n.maintenance - n.deficit;
+  return {
+    kcal,
+    protein: kcal*(n.proteinPct/100)/4,
+    carbs: kcal*(n.carbPct/100)/4,
+    fat: kcal*(n.fatPct/100)/9,
+    fibre: n.fibreTarget || 30
+  };
+}
+function last7DaysCalories(){
+  const out = [];
+  for(let i=6;i>=0;i--){
+    const d = new Date(); d.setDate(d.getDate()-i);
+    const ds = d.toISOString().slice(0,10);
+    const kcal = foodsForDate(ds).reduce((a,f)=>a+Number(f.calories||0),0);
+    out.push({label: d.toLocaleDateString('default',{weekday:'short'}), date: ds, kcal});
+  }
+  return out;
+}
+
+function macroBar(label, val, target, color, unit){
+  const pct = target>0 ? Math.min(100, Math.round(val/target*100)) : 0;
+  return `<div style="margin-bottom:10px;">
+    <div class="row-between" style="margin-bottom:4px;">
+      <span style="font-size:13px;font-weight:700;">${label}</span>
+      <span class="mono" style="font-size:12px;color:var(--muted);">${val.toFixed(0)} / ${target.toFixed(0)} ${unit} <span style="color:${color};font-weight:800;margin-left:4px;">${pct}%</span></span>
+    </div>
+    <div class="progress-track" style="height:7px;"><div class="progress-fill" style="width:${pct}%;background:${color};"></div></div>
+  </div>`;
+}
 
 function renderNutritionTab(){
-  const {bodyweight, maintenance, deficit} = state.nutrition;
-  const target = maintenance - deficit;
-  const proteinLow = Math.round(bodyweight*1.6);
-  const proteinHigh = Math.round(bodyweight*2);
-  const weeklyLoss = ((deficit*7)/7700).toFixed(2);
+  const n = state.nutrition;
+  const targets = macroTargets();
+  const weeklyLoss = ((n.deficit*7)/7700).toFixed(2);
 
   const eaten = todayEaten();
   const burned = todayBurned();
   const netDeficit = burned - eaten;
   const activityKcal = Math.round(todayActivityKcal());
-  const todaysFood = state.foodLog.filter(f=>f.date===todayStr());
+  const macros = todayMacros();
+  const macroPctTotal = (n.proteinPct||0)+(n.carbPct||0)+(n.fatPct||0);
+  const todaysFood = foodsForDate(todayStr());
+  const week = last7DaysCalories();
+  const weekTotal = week.reduce((a,d)=>a+d.kcal,0);
+  const weekAvg = Math.round(weekTotal/7);
+  const maxKcal = Math.max(targets.kcal, ...week.map(d=>d.kcal), 1);
 
   return `
-    <div class="eyebrow-label" style="margin-top:4px;">Today — Auto-Calculated</div>
+    <div class="eyebrow-label" style="margin-top:4px;">Today</div>
     <div class="grid2" style="margin-bottom:8px;">
-      <div class="stat-card"><div class="stat-label">Calories Eaten</div><div class="stat-value" style="color:var(--text);">${Math.round(eaten)}<span class="stat-unit">kcal</span></div></div>
-      <div class="stat-card"><div class="stat-label">Calories Burned</div><div class="stat-value" style="color:var(--steel);">${burned}<span class="stat-unit">kcal</span></div></div>
+      <div class="stat-card"><div class="stat-label">Eaten</div><div class="stat-value" style="color:var(--text);">${Math.round(eaten)}<span class="stat-unit">/ ${targets.kcal} kcal</span></div></div>
+      <div class="stat-card"><div class="stat-label">Burned (est.)</div><div class="stat-value" style="color:var(--steel);">${burned}<span class="stat-unit">kcal</span></div></div>
     </div>
-    <div class="info-box" style="text-align:center;padding:16px;margin-bottom:8px;background:${netDeficit>=0?'rgba(62,207,142,.08)':'rgba(255,90,31,.08)'};">
+    <div class="info-box" style="text-align:center;padding:14px;margin-bottom:16px;background:${netDeficit>=0?'rgba(62,207,142,.08)':'rgba(255,90,31,.08)'};">
       <div class="stat-label">${netDeficit>=0?'Deficit Created':'Surplus (over target)'}</div>
-      <div class="mono" style="font-weight:900;font-size:28px;color:${netDeficit>=0?'var(--mint)':'var(--accent)'};margin-top:2px;">${netDeficit>=0?'':'+'}${Math.abs(netDeficit)}<span style="font-size:14px;font-weight:700;color:var(--muted);margin-left:4px;">kcal</span></div>
+      <div class="mono" style="font-weight:900;font-size:26px;color:${netDeficit>=0?'var(--mint)':'var(--accent)'};margin-top:2px;">${netDeficit>=0?'':'+'}${Math.abs(netDeficit)}<span style="font-size:13px;font-weight:700;color:var(--muted);margin-left:4px;">kcal</span></div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px;">Burned = ${n.maintenance} maintenance + ~${activityKcal} workout est.</div>
     </div>
-    <div class="info-box" style="font-size:12px;margin-bottom:16px;">Burned = maintenance (${maintenance} kcal resting) + ~${activityKcal} kcal from today's logged workout time. This is an estimate, not a metabolic measurement.</div>
 
-    <div class="eyebrow-label">Log Food</div>
-    <div class="info-box" style="padding:12px;margin-bottom:8px;">
-      <div style="display:flex;gap:6px;">
-        <input type="text" id="food-name" placeholder="What did you eat?" style="flex:1;background:var(--surface-alt);border-radius:8px;padding:9px;font-size:13px;color:var(--text);">
-        <input type="number" id="food-cal" placeholder="kcal" style="width:70px;background:var(--surface-alt);border-radius:8px;padding:9px;font-size:13px;color:var(--accent);text-align:center;">
+    <div class="eyebrow-label">Macronutrients Today</div>
+    <div class="info-box" style="padding:14px;margin-bottom:16px;">
+      ${macroBar("Protein", macros.protein, targets.protein, "var(--accent)", "g")}
+      ${macroBar("Carbs", macros.carbs, targets.carbs, "var(--steel)", "g")}
+      ${macroBar("Fat", macros.fat, targets.fat, "#FFB020", "g")}
+      ${macroBar("Fibre", macros.fibre, targets.fibre, "var(--mint)", "g")}
+    </div>
+
+    <div class="eyebrow-label">Meals</div>
+    ${MEALS.map(meal=>{
+      const mealFoods = todaysFood.filter(f=>(f.meal||"Lunch")===meal);
+      const mealKcal = mealFoods.reduce((a,f)=>a+Number(f.calories||0),0);
+      const budget = Math.round(targets.kcal * MEAL_SHARE[meal]);
+      const isOpen = state.mealOpen===meal;
+      return `<div class="info-box" style="padding:12px 14px;margin-bottom:8px;">
+        <div class="row-between" data-meal-toggle="${meal}" style="cursor:pointer;">
+          <span style="font-weight:800;font-size:15px;">${meal}</span>
+          <span class="mono" style="font-size:12px;color:${mealKcal>budget?'var(--accent)':'var(--muted)'};">${mealKcal} of ${budget} Cal <span style="color:var(--accent);font-weight:900;margin-left:6px;">${isOpen?'−':'+'}</span></span>
+        </div>
+        ${mealFoods.map(f=>`<div class="history-row" style="margin-top:8px;">
+          <div><div style="font-size:13px;font-weight:600;">${f.name}</div>
+          ${(f.protein||f.carbs||f.fat)?`<div class="mono" style="font-size:10px;color:var(--muted);">P${f.protein||0} C${f.carbs||0} F${f.fat||0}</div>`:""}</div>
+          <span class="mono" style="font-size:12px;color:var(--accent);">${f.calories} kcal</span>
+          <button class="del" data-del-food="${f.id}">${svg('x',12)}</button>
+        </div>`).join("")}
+        ${isOpen?`<div style="margin-top:10px;">
+          <input type="text" id="food-name" placeholder="Food name" style="width:100%;background:var(--surface-alt);border-radius:8px;padding:9px;font-size:13px;color:var(--text);margin-bottom:6px;">
+          <div style="display:flex;gap:6px;margin-bottom:6px;">
+            <input type="number" id="food-cal" placeholder="kcal*" style="flex:1;background:var(--surface-alt);border-radius:8px;padding:9px;font-size:12px;color:var(--accent);text-align:center;">
+            <input type="number" id="food-protein" placeholder="P g" style="flex:1;background:var(--surface-alt);border-radius:8px;padding:9px;font-size:12px;color:var(--text);text-align:center;">
+            <input type="number" id="food-carbs" placeholder="C g" style="flex:1;background:var(--surface-alt);border-radius:8px;padding:9px;font-size:12px;color:var(--text);text-align:center;">
+            <input type="number" id="food-fat" placeholder="F g" style="flex:1;background:var(--surface-alt);border-radius:8px;padding:9px;font-size:12px;color:var(--text);text-align:center;">
+            <input type="number" id="food-fibre" placeholder="Fb g" style="flex:1;background:var(--surface-alt);border-radius:8px;padding:9px;font-size:12px;color:var(--text);text-align:center;">
+          </div>
+          <button class="btn btn-accent btn-block" data-log-meal-food="${meal}">Add to ${meal}</button>
+        </div>`:""}
+      </div>`;
+    }).join("")}
+
+    <div class="eyebrow-label">Last 7 Days</div>
+    <div class="info-box" style="padding:14px;margin-bottom:16px;">
+      <div class="grid2" style="margin-bottom:12px;">
+        <div><div class="stat-label">Weekly Total</div><div class="mono" style="font-weight:900;font-size:18px;">${weekTotal.toLocaleString()} <span style="font-size:11px;color:var(--muted);">Cal</span></div></div>
+        <div><div class="stat-label">Average / Day</div><div class="mono" style="font-weight:900;font-size:18px;">${weekAvg.toLocaleString()} <span style="font-size:11px;color:var(--muted);">Cal</span></div></div>
       </div>
-      <button class="btn btn-accent btn-block" data-action="log-food" style="margin-top:8px;">Add</button>
+      <div style="position:relative;height:110px;display:flex;align-items:flex-end;gap:6px;">
+        <div style="position:absolute;left:0;right:0;top:${100-Math.min(100,targets.kcal/maxKcal*100)}%;border-top:1.5px dashed var(--accent);opacity:.6;"></div>
+        ${week.map(d=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;height:100%;justify-content:flex-end;">
+          ${d.kcal>0?`<span class="mono" style="font-size:9px;color:var(--muted);">${d.kcal}</span>`:""}
+          <div style="width:70%;border-radius:4px 4px 0 0;background:${d.kcal>targets.kcal?'var(--accent)':'#FFB020'};height:${Math.max(2,Math.round(d.kcal/maxKcal*80))}px;"></div>
+          <span style="font-size:9px;color:var(--muted);font-weight:700;">${d.label}</span>
+        </div>`).join("")}
+      </div>
+      <div style="font-size:10px;color:var(--muted);margin-top:6px;">Dashed line = your ${targets.kcal} kcal daily target.</div>
     </div>
-    ${todaysFood.length===0?`<div class="empty-note" style="padding:12px 0;">No food logged today.</div>`:
-      todaysFood.map(f=>`<div class="history-row">
-        <span style="font-size:13px;font-weight:600;">${f.name}</span>
-        <span class="mono" style="font-size:13px;color:var(--accent);">${f.calories} kcal</span>
-        <button class="del" data-del-food="${f.id}">${svg('x',12)}</button>
-      </div>`).join("")}
 
-    <div class="eyebrow-label">Daily Targets</div>
-    <div class="field"><label>Bodyweight</label><div><input type="number" id="n-bw" value="${bodyweight}"><span class="unit">kg</span></div></div>
-    <div class="field"><label>Maintenance calories</label><div><input type="number" id="n-maint" value="${maintenance}"><span class="unit">kcal</span></div></div>
-    <div class="field"><label>Target deficit</label><div><input type="number" id="n-def" value="${deficit}"><span class="unit">kcal</span></div></div>
+    <div class="eyebrow-label">Calorie & Macro Budget</div>
+    <div class="field"><label>Bodyweight</label><div><input type="number" id="n-bw" value="${n.bodyweight}"><span class="unit">kg</span></div></div>
+    <div class="field"><label>Maintenance calories</label><div><input type="number" id="n-maint" value="${n.maintenance}"><span class="unit">kcal</span></div></div>
+    <div class="field"><label>Target deficit</label><div><input type="number" id="n-def" value="${n.deficit}"><span class="unit">kcal</span></div></div>
+    <div class="field"><label>Protein %</label><div><input type="number" id="n-proteinpct" value="${n.proteinPct}"><span class="unit">%</span></div></div>
+    <div class="field"><label>Carb %</label><div><input type="number" id="n-carbpct" value="${n.carbPct}"><span class="unit">%</span></div></div>
+    <div class="field"><label>Fat %</label><div><input type="number" id="n-fatpct" value="${n.fatPct}"><span class="unit">%</span></div></div>
+    <div class="field"><label>Fibre target</label><div><input type="number" id="n-fibre" value="${n.fibreTarget}"><span class="unit">g</span></div></div>
+    <div class="info-box" style="padding:10px 14px;margin-bottom:8px;${macroPctTotal!==100?'background:rgba(255,90,31,.1);':''}">
+      <div class="row-between"><span style="font-size:13px;font-weight:700;">Macro Total</span>
+      <span class="mono" style="font-weight:900;color:${macroPctTotal===100?'var(--mint)':'var(--accent)'};">${macroPctTotal}%</span></div>
+      ${macroPctTotal!==100?`<div style="font-size:11px;color:var(--accent);margin-top:2px;">Should add up to 100%</div>`:""}
+    </div>
 
-    <div class="eyebrow-label">Computed</div>
     <div class="grid2">
-      <div class="stat-card"><div class="stat-label">Calorie Target</div><div class="stat-value" style="color:var(--accent);">${target}<span class="stat-unit">kcal</span></div></div>
+      <div class="stat-card"><div class="stat-label">Calorie Target</div><div class="stat-value" style="color:var(--accent);">${targets.kcal}<span class="stat-unit">kcal</span></div></div>
       <div class="stat-card"><div class="stat-label">Weekly Loss (est.)</div><div class="stat-value" style="color:var(--mint);">${weeklyLoss}<span class="stat-unit">kg</span></div></div>
-      <div class="stat-card"><div class="stat-label">Protein — low</div><div class="stat-value" style="color:var(--steel);">${proteinLow}<span class="stat-unit">g</span></div></div>
-      <div class="stat-card"><div class="stat-label">Protein — high</div><div class="stat-value" style="color:var(--steel);">${proteinHigh}<span class="stat-unit">g</span></div></div>
+      <div class="stat-card"><div class="stat-label">Protein Target</div><div class="stat-value" style="color:var(--steel);">${Math.round(targets.protein)}<span class="stat-unit">g</span></div></div>
+      <div class="stat-card"><div class="stat-label">Carb Target</div><div class="stat-value" style="color:var(--steel);">${Math.round(targets.carbs)}<span class="stat-unit">g</span></div></div>
+      <div class="stat-card"><div class="stat-label">Fat Target</div><div class="stat-value" style="color:var(--steel);">${Math.round(targets.fat)}<span class="stat-unit">g</span></div></div>
+      <div class="stat-card"><div class="stat-label">Fibre Target</div><div class="stat-value" style="color:var(--mint);">${targets.fibre}<span class="stat-unit">g</span></div></div>
     </div>
     <div class="info-box" style="margin-top:14px;">Recalculate maintenance every 2–3 weeks against your actual weight trend. Don't drop below ~1800–2000 kcal given training volume — recovery beats speed here.</div>
   `;
@@ -1354,9 +1457,9 @@ const ALL_DATA_KEYS = ["hx_completed","hx_active_week","hx_nutrition","hx_bodylo
   "hx_workout_log","hx_food_log","hx_routines","hx_calc","hx_settings","hx_rest_duration","hx_tab"];
 
 function exportAllJSON(){
-  const data = { app:"hyrox-prep", version:1, exportedAt:new Date().toISOString(), data:{} };
+  const data = { app:"ignyt", version:1, exportedAt:new Date().toISOString(), data:{} };
   ALL_DATA_KEYS.forEach(k=>{ const v = localStorage.getItem(k); if(v!==null) data.data[k]=v; });
-  downloadFile("hyrox-prep-backup-"+todayStr()+".json", JSON.stringify(data,null,2), "application/json");
+  downloadFile("ignyt-backup-"+todayStr()+".json", JSON.stringify(data,null,2), "application/json");
 }
 
 function csvEscape(s){ s = String(s==null?"":s); return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s; }
@@ -1376,7 +1479,7 @@ function exportWorkoutsCSV(){
     rows.push([new Date(ts).toISOString().slice(0,10), exName+" (Plan "+wk+" "+day+")", getMuscle(exName), "", "", "", "", "", "", "plan check-off"]);
   });
   const csv = rows.map(r=>r.map(csvEscape).join(",")).join("\n");
-  downloadFile("hyrox-workouts-"+todayStr()+".csv", csv, "text/csv");
+  downloadFile("ignyt-workouts-"+todayStr()+".csv", csv, "text/csv");
 }
 
 function exportMeasurementsCSV(){
@@ -1385,7 +1488,7 @@ function exportMeasurementsCSV(){
     rows.push([e.date, e.weight||"", e.sleep||"", e.hrv||"", e.waist||"", e.chest||"", e.arms||"", e.bodyfat||""]);
   });
   const csv = rows.map(r=>r.map(csvEscape).join(",")).join("\n");
-  downloadFile("hyrox-measurements-"+todayStr()+".csv", csv, "text/csv");
+  downloadFile("ignyt-measurements-"+todayStr()+".csv", csv, "text/csv");
 }
 
 function downloadFile(filename, content, mime){
@@ -1403,8 +1506,8 @@ function importAllJSON(file){
   reader.onload = ()=>{
     try{
       const parsed = JSON.parse(reader.result);
-      if(!parsed || parsed.app!=="hyrox-prep" || !parsed.data){
-        alert("This doesn't look like a Hyrox Prep backup file.");
+      if(!parsed || (parsed.app!=="ignyt" && parsed.app!=="hyrox-prep") || !parsed.data){
+        alert("This doesn't look like an Ignyt backup file.");
         return;
       }
       if(!confirm("Import will REPLACE all current app data with the backup. Continue?")) return;
@@ -1880,16 +1983,28 @@ function attachHandlers(){
     });
   });
 
-  // Nutrition tab — food log
-  const logFoodBtn = document.querySelector('[data-action="log-food"]');
-  if(logFoodBtn) logFoodBtn.addEventListener("click", ()=>{
-    const nameEl = document.getElementById("food-name");
-    const calEl = document.getElementById("food-cal");
-    const name = nameEl.value.trim();
-    const cal = Number(calEl.value);
-    if(!name || !cal) return;
-    state.foodLog.unshift({ id: Date.now(), date: todayStr(), name, calories: cal });
-    render();
+  // Nutrition tab — meals & food log
+  document.querySelectorAll("[data-meal-toggle]").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      const meal = el.dataset.mealToggle;
+      state.mealOpen = state.mealOpen===meal ? null : meal;
+      render();
+    });
+  });
+  document.querySelectorAll("[data-log-meal-food]").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      const meal = el.dataset.logMealFood;
+      const name = document.getElementById("food-name").value.trim();
+      const cal = Number(document.getElementById("food-cal").value);
+      if(!name || !cal) return;
+      state.foodLog.unshift({ id: Date.now(), date: todayStr(), name, calories: cal, meal,
+        protein: Number(document.getElementById("food-protein").value)||0,
+        carbs: Number(document.getElementById("food-carbs").value)||0,
+        fat: Number(document.getElementById("food-fat").value)||0,
+        fibre: Number(document.getElementById("food-fibre").value)||0
+      });
+      render();
+    });
   });
   document.querySelectorAll("[data-del-food]").forEach(el=>{
     el.addEventListener("click", ()=>{
@@ -1899,12 +2014,17 @@ function attachHandlers(){
   });
 
   // Nutrition tab
-  ["n-bw","n-maint","n-def"].forEach(id=>{
+  ["n-bw","n-maint","n-def","n-proteinpct","n-carbpct","n-fatpct","n-fibre"].forEach(id=>{
     const el = document.getElementById(id);
     if(el) el.addEventListener("change", ()=>{
-      state.nutrition.bodyweight = Number(document.getElementById("n-bw").value);
-      state.nutrition.maintenance = Number(document.getElementById("n-maint").value);
-      state.nutrition.deficit = Number(document.getElementById("n-def").value);
+      const g = (i)=>{ const e=document.getElementById(i); return e?Number(e.value):0; };
+      state.nutrition.bodyweight = g("n-bw");
+      state.nutrition.maintenance = g("n-maint");
+      state.nutrition.deficit = g("n-def");
+      state.nutrition.proteinPct = g("n-proteinpct");
+      state.nutrition.carbPct = g("n-carbpct");
+      state.nutrition.fatPct = g("n-fatpct");
+      state.nutrition.fibreTarget = g("n-fibre");
       render();
     });
   });
