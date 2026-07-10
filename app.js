@@ -232,6 +232,8 @@ const state = {
   plateCalcOpen: null, // element id string when plate calc popover open
   restDuration: LS.get("hx_rest_duration",90),
   session: LS.get("hx_active_session", null),
+  prs: LS.get("hx_prs", []),
+  lastSessionPRs: null, // transient — set right after finishing a workout, shown as a celebration banner
   libCategory: "All",
   libSearch: "",
   showCustomForm: false,
@@ -266,6 +268,7 @@ function persist(){
   LS.set("hx_settings", state.settings);
   LS.set("hx_rest_duration", state.restDuration);
   LS.set("hx_active_session", state.session);
+  LS.set("hx_prs", state.prs);
   LS.set("hx_schema_version", SCHEMA_VERSION);
 }
 
@@ -484,6 +487,7 @@ function renderHomeTab(){
       <div class="stat-card"><div class="stat-label">Weight</div><div class="stat-value" style="color:var(--steel);">${latestWeight?latestWeight.weight:state.profile.weight}<span class="stat-unit">kg</span></div></div>
       <div class="stat-card"><div class="stat-label">Calories Today</div><div class="stat-value" style="color:var(--text);">${eaten}<span class="stat-unit">/ ${targets.kcal}</span></div></div>
       <div class="stat-card"><div class="stat-label">Protein Today</div><div class="stat-value" style="color:var(--text);">${proteinToday}<span class="stat-unit">/ ${Math.round(targets.protein)}g</span></div></div>
+      ${state.prs.length ? `<div class="stat-card" style="grid-column:1/-1;"><div class="stat-label">Latest PR</div><div class="stat-value" style="color:var(--accent);font-size:16px;">🏆 ${state.prs[0].exerciseName||'Session Volume'} — ${prValueLabel(state.prs[0])}<span class="stat-unit" style="display:block;margin-top:2px;">${prTypeLabel(state.prs[0])}</span></div></div>` : ''}
     </div>
 
     <div class="eyebrow-label">This Week</div>
@@ -557,6 +561,100 @@ function renderPlanTab(){
 }
 
 /* =========================================================
+   PERSONAL RECORDS — detected automatically when a workout finishes
+   Supported types (data-model honest): weight, est. 1RM, reps-at-weight,
+   session volume. Running/pace/distance PRs need dedicated distance/time
+   fields the logger doesn't currently capture, so they're not faked here.
+========================================================= */
+function estimatedOneRM(weight, reps){
+  // Epley formula — standard estimate, most reliable under ~12 reps
+  return weight * (1 + reps/30);
+}
+
+function computeHistoricalBests(){
+  const bests = {}; // { [exerciseName]: { weight, oneRM, repsAtWeight:{ "60":8 } } }
+  let maxVolume = 0;
+  state.workoutLog.forEach(session=>{
+    if(session.volume && session.volume > maxVolume) maxVolume = session.volume;
+    (session.exercises||[]).forEach(ex=>{
+      if(!bests[ex.name]) bests[ex.name] = { weight:0, oneRM:0, repsAtWeight:{} };
+      (ex.sets||[]).forEach(s=>{
+        const w = parseFloat(s.weight), r = parseFloat(s.reps);
+        if(isNaN(w) || isNaN(r) || r<=0) return;
+        if(w > bests[ex.name].weight) bests[ex.name].weight = w;
+        const orm = estimatedOneRM(w,r);
+        if(orm > bests[ex.name].oneRM) bests[ex.name].oneRM = orm;
+        const wKey = String(w);
+        if(!bests[ex.name].repsAtWeight[wKey] || r > bests[ex.name].repsAtWeight[wKey]) bests[ex.name].repsAtWeight[wKey] = r;
+      });
+    });
+  });
+  return { bests, maxVolume };
+}
+
+function makePR(exerciseName, type, value, previousValue, workoutId, achievedAt, weightContext){
+  const improvementPct = (previousValue>0) ? Math.round((value-previousValue)/previousValue*1000)/10 : null;
+  return {
+    id: Date.now().toString(36)+Math.random().toString(36).slice(2,7),
+    exerciseName, type, value, previousValue, improvementPct, workoutId, achievedAt,
+    weightContext: weightContext!=null ? weightContext : null
+  };
+}
+
+/* Runs once per finished session, against bests computed from PRIOR history only
+   (the session being detected hasn't been pushed to workoutLog yet), so re-finishing
+   or re-rendering never produces duplicate PRs. */
+function detectPRs(session, workoutId, finishedAt, sessionVolume){
+  const { bests, maxVolume } = computeHistoricalBests();
+  const newPRs = [];
+
+  (session.exercises||[]).forEach(ex=>{
+    const validSets = (ex.sets||[]).filter(s=>{
+      const w = parseFloat(s.weight), r = parseFloat(s.reps);
+      return !isNaN(w) && !isNaN(r) && r>0;
+    });
+    if(!validSets.length) return;
+
+    // Best set of THIS session for this exercise: highest weight, tie-break by higher reps
+    let bestSet = validSets[0];
+    validSets.forEach(s=>{
+      const w = parseFloat(s.weight), bw = parseFloat(bestSet.weight);
+      if(w>bw || (w===bw && parseFloat(s.reps)>parseFloat(bestSet.reps))) bestSet = s;
+    });
+    const w = parseFloat(bestSet.weight), r = parseFloat(bestSet.reps);
+    const orm = estimatedOneRM(w, r);
+    const prior = bests[ex.name] || { weight:0, oneRM:0, repsAtWeight:{} };
+
+    if(w > prior.weight){
+      newPRs.push(makePR(ex.name, "weight", w, prior.weight, workoutId, finishedAt));
+    }
+    if(orm > prior.oneRM){
+      newPRs.push(makePR(ex.name, "1rm", Math.round(orm*10)/10, Math.round(prior.oneRM*10)/10, workoutId, finishedAt));
+    }
+    const priorRepsAtThisWeight = prior.repsAtWeight[String(w)] || 0;
+    if(r > priorRepsAtThisWeight){
+      newPRs.push(makePR(ex.name, "reps", r, priorRepsAtThisWeight, workoutId, finishedAt, w));
+    }
+  });
+
+  if(sessionVolume > maxVolume && sessionVolume > 0){
+    newPRs.push(makePR(null, "volume", Math.round(sessionVolume), Math.round(maxVolume), workoutId, finishedAt));
+  }
+  return newPRs;
+}
+
+function prTypeLabel(pr){
+  if(pr.type==="weight") return "Heaviest Weight";
+  if(pr.type==="1rm") return "Est. 1RM";
+  if(pr.type==="reps") return "Most Reps @ "+pr.weightContext+"kg";
+  if(pr.type==="volume") return "Session Volume";
+  return pr.type;
+}
+function prValueLabel(pr){
+  return pr.type==="reps" ? pr.value+" reps" : pr.value+" kg";
+}
+
+/* =========================================================
    WORKOUT TAB — freestyle logger, set-table style
 ========================================================= */
 const REST_OPTIONS = [0,60,90,120,180];
@@ -605,10 +703,25 @@ function renderRoutineBuilder(){
   </div>`;
 }
 
+function renderPRCelebration(){
+  const prs = state.lastSessionPRs;
+  return `<div class="info-box" style="padding:16px;margin-bottom:14px;background:rgba(255,90,31,.1);border:1px solid rgba(255,90,31,.35);">
+    <div class="row-between" style="margin-bottom:10px;">
+      <span style="font-weight:900;font-size:15px;color:var(--accent);">🏆 New Personal Record${prs.length>1?'s':''}!</span>
+      <button class="del" data-action="dismiss-prs">${svg('x',15)}</button>
+    </div>
+    ${prs.map(pr=>`<div class="row-between" style="padding:6px 0;border-top:1px solid rgba(255,90,31,.15);">
+      <span style="font-size:13px;font-weight:700;">${pr.exerciseName||'Session Volume'} <span style="color:var(--muted);font-weight:400;">— ${prTypeLabel(pr)}</span></span>
+      <span class="mono" style="font-size:13px;color:var(--accent);font-weight:800;">${prValueLabel(pr)}${pr.improvementPct!=null?` <span style="color:var(--mint);font-size:11px;">+${pr.improvementPct}%</span>`:''}</span>
+    </div>`).join("")}
+  </div>`;
+}
+
 function renderWorkoutTab(){
   if(!state.session){
     const recent = state.workoutLog.slice(0,5);
     return `
+      ${state.lastSessionPRs && state.lastSessionPRs.length ? renderPRCelebration() : ""}
       <button class="btn btn-accent btn-block" data-action="start-session" style="margin-top:4px;">${svg('plus',16)} Start Empty Workout</button>
 
       <div class="row-between" style="margin:18px 0 8px;">
@@ -1731,6 +1844,19 @@ function renderProgressTab(){
       <div class="stat-card"><div class="stat-label">Total Sets Logged</div><div class="stat-value">${totalSets}</div></div>
     </div>
 
+    <div class="eyebrow-label">Personal Records</div>
+    ${state.prs.length===0 ? `<div class="empty-note" style="margin-bottom:16px;">No PRs yet — finish a freestyle workout to start tracking heaviest weight, estimated 1RM, rep records, and session volume.</div>` : `
+    <div class="info-box" style="padding:4px 14px;margin-bottom:16px;">
+      ${state.prs.slice(0,10).map(pr=>`<div class="history-row" style="background:none;padding:10px 0;margin:0;border-bottom:1px solid var(--border);">
+        <div>
+          <div style="font-size:13px;font-weight:700;">${pr.exerciseName||'Session Volume'}</div>
+          <div style="font-size:11px;color:var(--muted);">${prTypeLabel(pr)} · ${new Date(pr.achievedAt).toLocaleDateString('default',{month:'short',day:'numeric'})}</div>
+        </div>
+        <span class="mono" style="font-size:13px;color:var(--accent);font-weight:800;">${prValueLabel(pr)}</span>
+      </div>`).join("")}
+      ${state.prs.length>10?`<div style="font-size:11px;color:var(--muted);padding:8px 0;text-align:center;">+ ${state.prs.length-10} more in your export</div>`:""}
+    </div>`}
+
     <div class="eyebrow-label">Weekly Activity — Last 8 Weeks</div>
     <div class="info-box" style="padding:14px;">
       <div style="display:flex;gap:6px;margin-bottom:10px;">
@@ -1776,7 +1902,7 @@ function renderProgressTab(){
    SETTINGS TAB — export/import + workout settings
 ========================================================= */
 const ALL_DATA_KEYS = ["hx_completed","hx_active_week","hx_active_level","hx_profile","hx_nutrition","hx_bodylog","hx_custom_exercises",
-  "hx_workout_log","hx_food_log","hx_routines","hx_calc","hx_settings","hx_rest_duration","hx_active_session","hx_tab","hx_schema_version"];
+  "hx_workout_log","hx_food_log","hx_routines","hx_calc","hx_settings","hx_rest_duration","hx_active_session","hx_prs","hx_tab","hx_schema_version"];
 
 function exportAllJSON(){
   const data = { app:"ignyt", version:1, schemaVersion:SCHEMA_VERSION, exportedAt:new Date().toISOString(), data:{} };
@@ -2082,16 +2208,27 @@ function attachHandlers(){
         const w = parseFloat(s.weight); const r = parseFloat(s.reps);
         if(!isNaN(w) && !isNaN(r)) volume += w*r;
       }));
+      const workoutId = Date.now();
+      const newPRs = detectPRs(state.session, workoutId, finishedAt, volume);
       state.workoutLog.unshift({
-        id: Date.now(),
+        id: workoutId,
         date: new Date().toISOString().slice(0,10),
         startedAt: state.session.startedAt,
         finishedAt, durationMin, volume,
         exercises: state.session.exercises
       });
+      if(newPRs.length){
+        state.prs = newPRs.concat(state.prs);
+        state.lastSessionPRs = newPRs;
+      }
     }
     state.session = null;
     applyWakeLock();
+    render();
+  });
+  const dismissPRsBtn = document.querySelector('[data-action="dismiss-prs"]');
+  if(dismissPRsBtn) dismissPRsBtn.addEventListener("click", ()=>{
+    state.lastSessionPRs = null;
     render();
   });
   document.querySelectorAll("[data-del-session]").forEach(el=>{
