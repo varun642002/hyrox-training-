@@ -408,6 +408,8 @@ const state = {
   exercisePickerEquipment: "All",
   exercisePickerMuscle: "All",
   exercisePickerShowCreate: false,
+  exercisePickerContext: "session", // "session" adds to the active workout; "routine" adds to the routine builder
+  routineBuilderSets: 3,
   viewingHyroxSchedule: false,
   csvImportPreview: null,
   raceActive: LS.get("hx_race_active", null),
@@ -767,6 +769,7 @@ function renderHomeTab(){
 
 
 function renderPlanTab(){
+  if(state.showExercisePicker && state.exercisePickerContext==="routine") return renderExercisePicker();
   if(state.viewingHyroxSchedule) return renderHyroxSchedule();
   if(state.viewingRaceMode) return renderRaceMode();
   return `
@@ -1108,7 +1111,7 @@ function renderExercisePicker(){
   return `
     <div class="row-between" style="margin-bottom:14px;">
       <button class="ex-picker-textbtn" data-action="close-exercise-picker">Cancel</button>
-      <span style="font-weight:800;font-size:16px;">Add Exercise</span>
+      <span style="font-weight:800;font-size:16px;">${state.exercisePickerContext==="routine"?"Add to Routine":"Add Exercise"}</span>
       <button class="ex-picker-textbtn" data-action="show-create-in-picker" style="color:var(--accent);">Create</button>
     </div>
 
@@ -1116,7 +1119,7 @@ function renderExercisePicker(){
       <input type="text" id="ex-picker-search" placeholder="Search exercise" value="${state.exercisePickerSearch}">
     </div>
 
-    <div class="grid2" style="margin-bottom:14px;">
+    <div class="grid2" style="margin-bottom:${state.exercisePickerContext==='routine'?'10px':'14px'};">
       <select class="select-input" id="ex-picker-equip" style="margin:0;">
         ${equipOptions.map(o=>`<option value="${o}" ${equip===o?'selected':''}>${o==="All"?"All Equipment":o}</option>`).join("")}
       </select>
@@ -1124,6 +1127,12 @@ function renderExercisePicker(){
         ${muscleOptions.map(o=>`<option value="${o}" ${muscleFilter===o?'selected':''}>${o==="All"?"All Muscles":o}</option>`).join("")}
       </select>
     </div>
+    ${state.exercisePickerContext==="routine" ? `
+      <div class="row-between" style="margin-bottom:14px;background:var(--surface-alt);border-radius:8px;padding:8px 12px;">
+        <span style="font-size:12px;color:var(--muted);">Sets for the exercise you pick</span>
+        <input type="number" id="ex-picker-routine-sets" value="${state.routineBuilderSets}" min="1" style="width:44px;background:var(--surface);border-radius:6px;padding:6px;text-align:center;color:var(--accent);font-family:'SF Mono',monospace;font-weight:700;border:none;">
+      </div>
+    ` : ""}
 
     ${!isFiltering && recentItems.length ? `
       <div class="eyebrow-label" style="margin-top:4px;">Recent Exercises</div>
@@ -1196,16 +1205,13 @@ function renderRoutineBuilder(){
       <button class="del" data-remove-builder-ex="${i}" aria-label="Remove exercise">${svg('x',12)}</button>
     </div>`).join("") : ""}
 
-    <div style="display:flex;gap:6px;margin-top:${b.exercises.length?'10px':'0'};">
-      <select class="select-input" id="routine-ex-picker" style="margin-bottom:0;flex:1;">
-        <option value="">Choose an exercise…</option>
-        ${Object.entries(LIBRARY).map(([cat,items])=>`<optgroup label="${cat}">
-          ${items.map(([n])=>`<option value="${n}">${n}</option>`).join("")}
-        </optgroup>`).join("")}
-      </select>
-      <input type="number" id="routine-ex-sets" value="3" min="1" style="width:52px;background:var(--surface-alt);border-radius:8px;padding:9px;text-align:center;color:var(--accent);font-family:'SF Mono',monospace;font-weight:700;">
+    <div style="display:flex;gap:6px;align-items:center;margin-top:${b.exercises.length?'10px':'0'};">
+      <button class="btn btn-ghost" style="flex:1;text-align:left;display:flex;align-items:center;gap:8px;" data-action="open-exercise-picker-for-routine">${svg('plus',14)} Choose Exercise…</button>
+      <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">
+        <span style="font-size:11px;color:var(--muted);">sets</span>
+        <input type="number" id="routine-ex-sets" value="${state.routineBuilderSets}" min="1" style="width:44px;background:var(--surface-alt);border-radius:8px;padding:9px 4px;text-align:center;color:var(--accent);font-family:'SF Mono',monospace;font-weight:700;border:none;">
+      </div>
     </div>
-    <button class="btn btn-ghost btn-block" data-action="add-builder-exercise" style="margin-top:8px;">${svg('plus',14)} Add Exercise</button>
     <button class="btn btn-accent btn-block" data-action="save-routine" style="margin-top:10px;">Save Routine</button>
   </div>`;
 }
@@ -3129,6 +3135,138 @@ function parseCsvText(text){
   return rows.filter(r => !(r.length===1 && r[0].trim()===""));
 }
 
+/* =========================================================
+   CSV WORKOUT IMPORT — supports the standard Hevy-style export format
+   (title, start_time, end_time, description, exercise_title, superset_id,
+   exercise_notes, set_index, set_type, weight_kg, reps, distance_km,
+   duration_seconds, rpe) — one row per SET. Verified against a real
+   304-session / 4593-row export before writing this, per the "inspect
+   before importing" rule: set_type values (normal/warmup/dropset/failure)
+   map directly onto this app's own SET_TYPE_CYCLE, weight is already in kg,
+   and rpe values already match this app's RPE_OPTIONS format.
+
+   Distance/duration-based cardio sets (Treadmill etc.) are imported with
+   blank weight/reps -- so they never corrupt volume or PR math -- with a
+   note on the exercise flagging that distance/duration weren't preserved,
+   since this app's set schema has no field for them (same honest gap as
+   PRs/Race analytics elsewhere in this build).
+
+   Additive only: existing workout history is never touched or replaced.
+   Re-importing the same file is safe -- sessions already present (matched
+   by title + exact start time) are skipped as duplicates, not re-added.
+========================================================= */
+const SET_TYPE_IMPORT_MAP = { normal:"working", warmup:"warmup", dropset:"drop", failure:"failure" };
+
+/* "10 Jul 2026, 11:53" -> timestamp (ms), or null if unparseable */
+function parseHevyDateTime(str){
+  if(!str) return null;
+  const m = String(str).trim().match(/^(\d{1,2}) (\w{3}) (\d{4}),\s*(\d{1,2}):(\d{2})$/);
+  if(!m) return null;
+  const MONTHS = {Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
+  const mon = MONTHS[m[2]];
+  if(mon===undefined) return null;
+  const d = new Date(Number(m[3]), mon, Number(m[1]), Number(m[4]), Number(m[5]));
+  return isNaN(d.getTime()) ? null : d.getTime();
+}
+
+/* Sniffs the header row to decide which importer applies. */
+function detectCsvKind(header){
+  const h = header.map(c=>c.trim().toLowerCase());
+  if(h.includes("exercise_title") && h.includes("start_time") && h.includes("set_type")) return "workouts";
+  if(h.includes("name") && h.includes("muscle")) return "exercises";
+  return "unknown";
+}
+
+function validateWorkoutCsv(text){
+  let rows;
+  try{ rows = parseCsvText(text); }
+  catch(e){ return { error:"Could not read this file as CSV." }; }
+  if(rows.length < 2) return { error:"This file has no data rows." };
+
+  const header = rows[0].map(h=>h.trim().toLowerCase());
+  const need = ["title","start_time","exercise_title","set_type"];
+  const missing = need.filter(c=>header.indexOf(c)===-1);
+  if(missing.length) return { error:"Missing required column(s): "+missing.join(", ")+". Found columns: "+header.join(", ") };
+
+  const idx = {}; header.forEach((c,i)=> idx[c]=i);
+  const col = (r,name)=> idx[name]!==undefined ? (r[idx[name]]||"").trim() : "";
+
+  const existingSessionKeys = new Set(state.workoutLog.map(s=>s.title+"|"+s.startedAt));
+
+  const sessionOrder = [];         // preserves file order for chronological backfill
+  const sessionsByKey = new Map(); // key -> accumulator
+  let invalidRows = [];
+
+  for(let i=1;i<rows.length;i++){
+    const r = rows[i];
+    if(r.every(c=>c.trim()==="")) continue;
+    const title = col(r,"title") || "Workout";
+    const startTs = parseHevyDateTime(col(r,"start_time"));
+    const exerciseTitle = col(r,"exercise_title");
+    if(!exerciseTitle || startTs===null){
+      invalidRows.push({ row:i+1, reason: !exerciseTitle ? "missing exercise_title" : "unparseable start_time" });
+      continue;
+    }
+    const endTs = parseHevyDateTime(col(r,"end_time"));
+    const key = title+"|"+startTs;
+    if(!sessionsByKey.has(key)){
+      sessionsByKey.set(key, {
+        title, startedAt: startTs, finishedAt: endTs,
+        notes: col(r,"description"), exercisesByName: new Map(), exerciseOrder: []
+      });
+      sessionOrder.push(key);
+    }
+    const sess = sessionsByKey.get(key);
+    if(!sess.exercisesByName.has(exerciseTitle)){
+      sess.exercisesByName.set(exerciseTitle, { name: exerciseTitle, notes: col(r,"exercise_notes"), sets: [], hasCardio:false });
+      sess.exerciseOrder.push(exerciseTitle);
+    }
+    const ex = sess.exercisesByName.get(exerciseTitle);
+    const weight = col(r,"weight_kg");
+    const reps = col(r,"reps");
+    const distance = col(r,"distance_km");
+    const duration = col(r,"duration_seconds");
+    if((distance || duration) && !weight && !reps) ex.hasCardio = true;
+    ex.sets.push({
+      weight: weight || "", reps: reps || "",
+      rpe: col(r,"rpe") || "", done:true,
+      type: SET_TYPE_IMPORT_MAP[col(r,"set_type").toLowerCase()] || "working"
+    });
+  }
+
+  const validSessions = [], duplicateSessions = [];
+  sessionOrder.forEach(key=>{
+    const s = sessionsByKey.get(key);
+    const exercises = s.exerciseOrder.map(name=>{
+      const ex = s.exercisesByName.get(name);
+      return {
+        name: ex.name,
+        notes: ex.hasCardio ? (ex.notes ? ex.notes+" " : "")+"(Imported cardio set — distance/duration not preserved, this app tracks weight/reps only.)" : ex.notes,
+        restDuration: 90,
+        sets: ex.sets
+      };
+    });
+    const durationMin = s.finishedAt ? Math.max(1, Math.round((s.finishedAt-s.startedAt)/60000)) : null;
+    const volume = computeSessionVolume(exercises);
+    const session = {
+      id: s.startedAt, // stable id derived from the real timestamp so re-import dedup works
+      date: new Date(s.startedAt).toISOString().slice(0,10),
+      startedAt: s.startedAt, finishedAt: s.finishedAt, durationMin, volume,
+      exercises, notes: s.notes, title: s.title
+    };
+    if(existingSessionKeys.has(s.title+"|"+s.startedAt)) duplicateSessions.push(session);
+    else validSessions.push(session);
+  });
+
+  return {
+    kind: "workouts",
+    totalRows: rows.length-1,
+    sessionsFound: sessionOrder.length,
+    validSessions, invalidRows, duplicateSessions,
+    validCount: validSessions.length, invalidCount: invalidRows.length, duplicateCount: duplicateSessions.length
+  };
+}
+
 function validateExerciseCsv(text){
   let rows;
   try{ rows = parseCsvText(text); }
@@ -3173,16 +3311,26 @@ function validateExerciseCsv(text){
   }
 
   return {
+    kind: "exercises",
     totalRows: rows.length-1,
     validRows, invalidRows, duplicateRows,
     validCount: validRows.length, invalidCount: invalidRows.length, duplicateCount: duplicateRows.length
   };
 }
 
-function importExercisesCsv(file){
+function importCsv(file){
   const reader = new FileReader();
   reader.onload = ()=>{
-    const result = validateExerciseCsv(reader.result);
+    let rows;
+    try{ rows = parseCsvText(reader.result); }
+    catch(e){ alert("Couldn't read this file as CSV."); return; }
+    if(!rows.length){ alert("This file appears to be empty."); return; }
+    const kind = detectCsvKind(rows[0]);
+    if(kind==="unknown"){
+      alert("Couldn't recognize this CSV's columns. Expected either an exercise list (name, muscle, …) or a Hevy-style workout export (title, start_time, exercise_title, set_type, …).");
+      return;
+    }
+    const result = kind==="workouts" ? validateWorkoutCsv(reader.result) : validateExerciseCsv(reader.result);
     if(result.error){
       alert("Couldn't import this file: "+result.error);
       return;
@@ -3196,9 +3344,27 @@ function importExercisesCsv(file){
 
 function renderCsvImportPreview(){
   const r = state.csvImportPreview;
+  if(r.kind==="workouts"){
+    return `
+      <div class="info-box" style="padding:12px 14px;margin-top:12px;background:var(--surface-alt);">
+        <div style="font-weight:800;font-size:14px;margin-bottom:8px;">Import Preview — Workout History</div>
+        <div class="row-between" style="padding:3px 0;"><span style="font-size:13px;">Total rows found</span><span class="mono" style="font-weight:700;">${r.totalRows}</span></div>
+        <div class="row-between" style="padding:3px 0;"><span style="font-size:13px;">Sessions found</span><span class="mono" style="font-weight:700;">${r.sessionsFound}</span></div>
+        <div class="row-between" style="padding:3px 0;"><span style="font-size:13px;color:var(--mint);">Valid sessions</span><span class="mono" style="font-weight:700;color:var(--mint);">${r.validCount}</span></div>
+        <div class="row-between" style="padding:3px 0;"><span style="font-size:13px;color:var(--accent);">Invalid rows</span><span class="mono" style="font-weight:700;color:var(--accent);">${r.invalidCount}</span></div>
+        <div class="row-between" style="padding:3px 0;"><span style="font-size:13px;color:var(--muted);">Duplicate (already imported)</span><span class="mono" style="font-weight:700;color:var(--muted);">${r.duplicateCount}</span></div>
+        ${r.invalidRows.length ? `<div style="font-size:11px;color:var(--muted);margin-top:8px;">Invalid rows: ${r.invalidRows.slice(0,5).map(x=>`row ${x.row} (${x.reason})`).join(", ")}${r.invalidRows.length>5?` +${r.invalidRows.length-5} more`:''}</div>` : ""}
+        ${r.validCount>0 ? `
+          <div style="font-size:11px;color:var(--muted);margin:10px 0 2px;">This will backfill Personal Records chronologically from your imported history, same as if you'd logged them in the app all along.</div>
+          <button class="btn btn-accent btn-block" data-action="confirm-csv-import" style="margin-top:8px;">Import ${r.validCount} Session${r.validCount!==1?'s':''}</button>
+        ` : `<div style="font-size:12px;color:var(--muted);margin-top:10px;">Nothing new to import — every session in this file is already in your history.</div>`}
+        <button class="btn btn-ghost btn-block" data-action="cancel-csv-import" style="margin-top:8px;">Cancel</button>
+      </div>
+    `;
+  }
   return `
     <div class="info-box" style="padding:12px 14px;margin-top:12px;background:var(--surface-alt);">
-      <div style="font-weight:800;font-size:14px;margin-bottom:8px;">Import Preview</div>
+      <div style="font-weight:800;font-size:14px;margin-bottom:8px;">Import Preview — Exercises</div>
       <div class="row-between" style="padding:3px 0;"><span style="font-size:13px;">Total rows found</span><span class="mono" style="font-weight:700;">${r.totalRows}</span></div>
       <div class="row-between" style="padding:3px 0;"><span style="font-size:13px;color:var(--mint);">Valid</span><span class="mono" style="font-weight:700;color:var(--mint);">${r.validCount}</span></div>
       <div class="row-between" style="padding:3px 0;"><span style="font-size:13px;color:var(--accent);">Invalid</span><span class="mono" style="font-weight:700;color:var(--accent);">${r.invalidCount}</span></div>
@@ -3350,14 +3516,16 @@ function renderSettingsTab(){
       <button class="btn btn-ghost btn-block" data-action="import-json">Choose Backup File…</button>
     </div>
 
-    <div class="eyebrow-label">Import Exercises (CSV)</div>
+    <div class="eyebrow-label">Import CSV</div>
     <div class="info-box" style="padding:14px;">
       <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">
-        Add exercises from a spreadsheet. This only adds to your Custom Exercises — it never touches workouts, routines, or any other data.
-        Required columns: <b style="color:var(--text);">name</b>, <b style="color:var(--text);">muscle</b>. Optional: <b style="color:var(--text);">cat</b> (equipment), <b style="color:var(--text);">presc</b>, <b style="color:var(--text);">unit</b>.
+        Import from a spreadsheet. Two formats are auto-detected:<br>
+        <b style="color:var(--text);">Exercises</b> — columns <b style="color:var(--text);">name</b>, <b style="color:var(--text);">muscle</b> (optional: cat, presc, unit). Adds to Custom Exercises only.<br>
+        <b style="color:var(--text);">Workout History</b> — a Hevy-style export (title, start_time, exercise_title, set_type, weight_kg, reps, …). Adds full past workouts and backfills PRs.<br>
+        Either way, this only adds — it never overwrites or deletes anything, and re-importing the same file skips what's already there.
       </div>
-      <input type="file" id="import-exercises-csv" accept=".csv,text/csv" style="display:none;">
-      <button class="btn btn-ghost btn-block" data-action="import-exercises-csv">Choose CSV File…</button>
+      <input type="file" id="import-csv" accept=".csv,text/csv" style="display:none;">
+      <button class="btn btn-ghost btn-block" data-action="import-csv">Choose CSV File…</button>
       ${state.csvImportPreview ? renderCsvImportPreview() : ""}
     </div>
 
@@ -3515,16 +3683,48 @@ function attachHandlers(){
     impBtn.addEventListener("click", ()=> impFile.click());
     impFile.addEventListener("change", ()=>{ if(impFile.files.length) importAllJSON(impFile.files[0]); });
   }
-  const impCsvBtn = document.querySelector('[data-action="import-exercises-csv"]');
-  const impCsvFile = document.getElementById("import-exercises-csv");
+  const impCsvBtn = document.querySelector('[data-action="import-csv"]');
+  const impCsvFile = document.getElementById("import-csv");
   if(impCsvBtn && impCsvFile){
     impCsvBtn.addEventListener("click", ()=> impCsvFile.click());
-    impCsvFile.addEventListener("change", ()=>{ if(impCsvFile.files.length) importExercisesCsv(impCsvFile.files[0]); });
+    impCsvFile.addEventListener("change", ()=>{ if(impCsvFile.files.length) importCsv(impCsvFile.files[0]); });
   }
   const confirmCsvBtn = document.querySelector('[data-action="confirm-csv-import"]');
   if(confirmCsvBtn) confirmCsvBtn.addEventListener("click", ()=>{
     const r = state.csvImportPreview;
-    if(!r || !r.validRows.length) return;
+    if(!r) return;
+    if(r.kind==="workouts"){
+      if(!r.validSessions.length) return;
+      // Chronological backfill: process oldest-first, and for each session only let PR
+      // detection "see" sessions that genuinely happened before it (existing history up
+      // to that point, plus already-backfilled imports) -- not any newer sessions already
+      // in the log -- so PRs land on the correct date instead of being silently skipped
+      // because a later real session already held the record.
+      const chronological = r.validSessions.slice().sort((a,b)=> a.startedAt-b.startedAt);
+      const existingSnapshot = state.workoutLog.slice();
+      const backfilled = [];
+      let prCount = 0;
+      chronological.forEach(session=>{
+        state.workoutLog = existingSnapshot.filter(e=>e.startedAt <= session.startedAt).concat(backfilled);
+        const newPRs = detectPRs(
+          { exercises: session.exercises },
+          session.id,
+          session.finishedAt || session.startedAt,
+          session.volume
+        );
+        if(newPRs.length){ state.prs = newPRs.concat(state.prs); prCount += newPRs.length; }
+        backfilled.push(session);
+      });
+      state.workoutLog = existingSnapshot.concat(backfilled).sort((a,b)=> b.startedAt-a.startedAt);
+      const newlyUnlocked = checkAchievements();
+      const sessionCount = r.validCount;
+      state.csvImportPreview = null;
+      persist();
+      render();
+      alert("Imported "+sessionCount+" session"+(sessionCount!==1?"s":"")+", backfilled "+prCount+" PR"+(prCount!==1?"s":"")+(newlyUnlocked.length?", unlocked "+newlyUnlocked.length+" achievement"+(newlyUnlocked.length!==1?"s":""):"")+".");
+      return;
+    }
+    if(!r.validRows || !r.validRows.length) return;
     state.customExercises = state.customExercises.concat(r.validRows);
     const count = r.validCount;
     state.csvImportPreview = null;
@@ -3646,16 +3846,29 @@ function attachHandlers(){
     state.routineBuilder = state.routineBuilder ? null : { name:"", exercises:[] };
     render();
   });
-  const addBuilderExBtn = document.querySelector('[data-action="add-builder-exercise"]');
-  if(addBuilderExBtn) addBuilderExBtn.addEventListener("click", ()=>{
+  const openPickerForRoutineBtn = document.querySelector('[data-action="open-exercise-picker-for-routine"]');
+  if(openPickerForRoutineBtn) openPickerForRoutineBtn.addEventListener("click", ()=>{
     const nameEl = document.getElementById("routine-name");
     if(nameEl) state.routineBuilder.name = nameEl.value;
-    const picker = document.getElementById("routine-ex-picker");
     const setsEl = document.getElementById("routine-ex-sets");
-    if(picker && picker.value){
-      state.routineBuilder.exercises.push({ name: picker.value, sets: Math.max(1, Number(setsEl.value)||3) });
-      render();
-    }
+    if(setsEl) state.routineBuilderSets = Math.max(1, Number(setsEl.value)||3);
+    state.showExercisePicker = true;
+    state.exercisePickerContext = "routine";
+    state.exercisePickerSearch = "";
+    state.exercisePickerEquipment = "All";
+    state.exercisePickerMuscle = "All";
+    state.exercisePickerShowCreate = false;
+    render();
+  });
+  const routineSetsEl = document.getElementById("routine-ex-sets");
+  if(routineSetsEl) routineSetsEl.addEventListener("change", ()=>{
+    state.routineBuilderSets = Math.max(1, Number(routineSetsEl.value)||3);
+    persist();
+  });
+  const pickerRoutineSetsEl = document.getElementById("ex-picker-routine-sets");
+  if(pickerRoutineSetsEl) pickerRoutineSetsEl.addEventListener("change", ()=>{
+    state.routineBuilderSets = Math.max(1, Number(pickerRoutineSetsEl.value)||3);
+    persist();
   });
   document.querySelectorAll("[data-remove-builder-ex]").forEach(el=>{
     el.addEventListener("click", ()=>{
@@ -4041,6 +4254,7 @@ function attachHandlers(){
   const openPickerBtn = document.querySelector('[data-action="open-exercise-picker"]');
   if(openPickerBtn) openPickerBtn.addEventListener("click", ()=>{
     state.showExercisePicker = true;
+    state.exercisePickerContext = "session";
     state.exercisePickerSearch = "";
     state.exercisePickerEquipment = "All";
     state.exercisePickerMuscle = "All";
@@ -4075,8 +4289,12 @@ function attachHandlers(){
     el.addEventListener("click", (e)=>{
       if(e.target.closest("[data-view-exercise-from-picker]")) return; // let the info button handle its own click
       const name = el.dataset.pickExercise;
-      state.session.exercises.push({ name, notes:"", restDuration:state.settings.defaultRest,
-        sets: [{ weight:"", reps:"", rpe:"", done:false, type:"working" }] });
+      if(state.exercisePickerContext==="routine"){
+        state.routineBuilder.exercises.push({ name, sets: state.routineBuilderSets });
+      } else {
+        state.session.exercises.push({ name, notes:"", restDuration:state.settings.defaultRest,
+          sets: [{ weight:"", reps:"", rpe:"", done:false, type:"working" }] });
+      }
       state.showExercisePicker = false;
       render();
     });
@@ -4103,8 +4321,12 @@ function attachHandlers(){
     const presc = document.getElementById("custom-presc").value.trim() || "—";
     if(!name) return;
     state.customExercises.push({ name, cat, presc, unit:"reps", muscle });
-    state.session.exercises.push({ name, notes:"", restDuration:state.settings.defaultRest,
-      sets: [{ weight:"", reps:"", rpe:"", done:false, type:"working" }] });
+    if(state.exercisePickerContext==="routine"){
+      state.routineBuilder.exercises.push({ name, sets: state.routineBuilderSets });
+    } else {
+      state.session.exercises.push({ name, notes:"", restDuration:state.settings.defaultRest,
+        sets: [{ weight:"", reps:"", rpe:"", done:false, type:"working" }] });
+    }
     state.exercisePickerShowCreate = false;
     state.showExercisePicker = false;
     render();
