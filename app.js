@@ -90,35 +90,37 @@ const LIBRARY = {
   "Barbell":[["Back Squat","4x6","reps","Quadriceps"],["Front Squat","4x6","reps","Quadriceps"],["Deadlift","4x5","reps","Hamstrings"],
     ["Romanian Deadlift","3x8","reps","Hamstrings"],["Sumo Deadlift","4x5","reps","Glutes"],["Bench Press","4x6","reps","Chest"],
     ["Incline Bench Press","4x8","reps","Chest"],["Overhead Press","3x8","reps","Shoulders"],["Push Press","3x6","reps","Shoulders"],
-    ["Bent-Over Row","4x8","reps","Lats"],["Barbell Curl","3x10","reps","Biceps"],["Hip Thrust","3x10","reps","Glutes"]],
+    ["Bent-Over Row","4x8","reps","Lats"],["Barbell Curl","3x10","reps","Biceps"],["Hip Thrust","3x10","reps","Glutes"],["Barbell Bench Press","3x10","reps","Chest"],["Decline Barbell Bench Press","3x10","reps","Chest"],["Meadows Row","3x10","reps","Lats"],["Barbell Bent-Over Row","3x10","reps","Lats"],["Landmine Press","3x10","reps","Shoulders"],["Reverse-Grip Barbell Curl","3x10","reps","Biceps"],["Dumbbell EZ-Bar Curl","3x10","reps","Biceps"],["Resistance Band Preacher Curl","3x10","reps","Biceps"],["Dumbbell Close-Grip Bench Press","3x10","reps","Triceps"],["Barbell Close-Grip Bench Press","3x10","reps","Triceps"],["Kettlebell Skull Crusher","3x10","reps","Triceps"],["Cable Close-Grip Bench Press","3x10","reps","Triceps"],["Resistance Band Skull Crusher","3x10","reps","Triceps"],["Barbell Back Squat","3x10","reps","Quadriceps"],["Pin Barbell Back Squat","3x10","reps","Quadriceps"],["Tempo Front Squat","3x10","reps","Quadriceps"],["Single-Leg Dumbbell Romanian Deadlift","3x10","reps","Hamstrings"],["Snatch-Grip Romanian Deadlift","3x10","reps","Hamstrings"],["Good Morning","3x10","reps","Hamstrings"],["Barbell Romanian Deadlift","3x10","reps","Hamstrings"],["Barbell Good Morning","3x10","reps","Hamstrings"],["Cable Stiff-Leg Deadlift","3x10","reps","Hamstrings"],["Resistance Band Romanian Deadlift","3x10","reps","Hamstrings"],["Barbell Hip Thrust","3x10","reps","Glutes"],["Banded Barbell Hip Thrust","3x10","reps","Glutes"],["Conventional Deadlift","3x10","reps","Glutes"],["Paused Conventional Deadlift","3x10","reps","Glutes"],["Deficit Conventional Deadlift","3x10","reps","Glutes"],["Rack Pull Conventional Deadlift","3x10","reps","Glutes"],["Block Pull Conventional Deadlift","3x10","reps","Glutes"],["Snatch-Grip Conventional Deadlift","3x10","reps","Glutes"],["Paused Sumo Deadlift","3x10","reps","Glutes"],["Deficit Sumo Deadlift","3x10","reps","Glutes"],["Block Pull Sumo Deadlift","3x10","reps","Glutes"],["Dumbbell Conventional Deadlift","3x10","reps","Glutes"],["Dumbbell Sumo Deadlift","3x10","reps","Glutes"],["Barbell Conventional Deadlift","3x10","reps","Glutes"],["Barbell Sumo Deadlift","3x10","reps","Glutes"],["Kettlebell Conventional Deadlift","3x10","reps","Glutes"],["Kettlebell Sumo Deadlift","3x10","reps","Glutes"],["Cable Conventional Deadlift","3x10","reps","Glutes"],["Cable Sumo Deadlift","3x10","reps","Glutes"],["Resistance Band Conventional Deadlift","3x10","reps","Glutes"],["Resistance Band Sumo Deadlift","3x10","reps","Glutes"],["Power Clean","3x10","reps","Glutes"],["Hang Power Clean","3x10","reps","Glutes"],["Block Power Clean","3x10","reps","Glutes"],["High-Hang Power Clean","3x10","reps","Glutes"],["Muscle Power Clean","3x10","reps","Glutes"],["Clean and Jerk","3x10","reps","Cardio"],["Snatch","3x10","reps","Cardio"],["Hang Snatch","3x10","reps","Cardio"],["Block Snatch","3x10","reps","Cardio"],["High-Hang Snatch","3x10","reps","Cardio"],["Muscle Snatch","3x10","reps","Cardio"],["Split Snatch","3x10","reps","Cardio"],["Power Snatch","3x10","reps","Cardio"],["Hang Clean","3x10","reps","Glutes"],["Dumbbell Power Clean","3x10","reps","Glutes"],["Dumbbell Clean and Jerk","3x10","reps","Cardio"],["Dumbbell Snatch","3x10","reps","Cardio"],["Dumbbell Power Snatch","3x10","reps","Cardio"],["Dumbbell Hang Clean","3x10","reps","Glutes"],["Dumbbell Push Press","3x10","reps","Shoulders"],["Barbell Power Clean","3x10","reps","Glutes"],["Barbell Clean and Jerk","3x10","reps","Cardio"],["Barbell Snatch","3x10","reps","Cardio"],["Barbell Power Snatch","3x10","reps","Cardio"],["Barbell Hang Clean","3x10","reps","Glutes"],["Barbell Push Press","3x10","reps","Shoulders"],["Kettlebell Power Clean","3x10","reps","Glutes"],["Kettlebell Clean and Jerk","3x10","reps","Cardio"],["Kettlebell Power Snatch","3x10","reps","Cardio"],["Kettlebell Hang Clean","3x10","reps","Glutes"],["Kettlebell Push Press","3x10","reps","Shoulders"],["Cable Power Clean","3x10","reps","Glutes"],["Cable Clean and Jerk","3x10","reps","Cardio"],["Cable Snatch","3x10","reps","Cardio"],["Cable Power Snatch","3x10","reps","Cardio"],["Cable Hang Clean","3x10","reps","Glutes"],["Cable Push Press","3x10","reps","Shoulders"],["Resistance Band Power Clean","3x10","reps","Glutes"],["Resistance Band Clean and Jerk","3x10","reps","Cardio"],["Resistance Band Snatch","3x10","reps","Cardio"],["Resistance Band Power Snatch","3x10","reps","Cardio"],["Resistance Band Hang Clean","3x10","reps","Glutes"],["Resistance Band Push Press","3x10","reps","Shoulders"],["Jefferson Curl","3x10","reps","Abdominals"],["Trap-Bar Deadlift","3x10","reps","Glutes"],["Dumbbell Trap-Bar Deadlift","3x10","reps","Glutes"],["Barbell Trap-Bar Deadlift","3x10","reps","Glutes"],["Kettlebell Trap-Bar Deadlift","3x10","reps","Glutes"],["Cable Trap-Bar Deadlift","3x10","reps","Glutes"],["Resistance Band Trap-Bar Deadlift","3x10","reps","Glutes"]],
   "Dumbbell":[["DB Bench Press","4x8","reps","Chest"],["DB Row","4x10","reps","Lats"],["DB Shoulder Press","3x10","reps","Shoulders"],
     ["Goblet Squat","3x12","reps","Quadriceps"],["Walking Lunges","3x12/leg","reps","Quadriceps"],["Bulgarian Split Squat","3x10/leg","reps","Quadriceps"],
     ["Farmer's Carry","4x40m","distance","Forearms"],["DB Curl","3x12","reps","Biceps"],["Lateral Raise","3x12","reps","Shoulders"],
-    ["DB RDL","3x10","reps","Hamstrings"],["Renegade Row","3x8/side","reps","Lats"]],
+    ["DB RDL","3x10","reps","Hamstrings"],["Renegade Row","3x8/side","reps","Lats"],["Dumbbell Bench Press","3x10","reps","Chest"],["Dumbbell Fly","3x10","reps","Chest"],["Incline Dumbbell Press","3x10","reps","Chest"],["One-Arm Dumbbell Row","3x10","reps","Lats"],["Dumbbell Lateral Raise","3x10","reps","Shoulders"],["One-Arm Dumbbell Lateral Raise","3x10","reps","Shoulders"],["Kettlebell Arnold Press","3x10","reps","Shoulders"],["Dumbbell Rear Delt Fly","3x10","reps","Shoulders"],["Cable Arnold Press","3x10","reps","Shoulders"],["Alternating Dumbbell Curl","3x10","reps","Biceps"],["Zottman Dumbbell Curl","3x10","reps","Biceps"],["Rope Cable Hammer Curl","3x10","reps","Biceps"],["Dumbbell Concentration Curl","3x10","reps","Biceps"],["Barbell Hammer Curl","3x10","reps","Biceps"],["Incline Dumbbell Curl","3x10","reps","Biceps"],["Kettlebell Hammer Curl","3x10","reps","Biceps"],["Cable Hammer Curl","3x10","reps","Biceps"],["Front-Rack Walking Lunge","3x10","reps","Quadriceps"],["Front-Rack Reverse Lunge","3x10","reps","Quadriceps"],["High-Box Step-Up","3x10","reps","Quadriceps"]],
   "Machine":[["Leg Press","4x10","reps","Quadriceps"],["Hack Squat","4x10","reps","Quadriceps"],["Leg Extension","3x12","reps","Quadriceps"],
     ["Leg Curl","3x12","reps","Hamstrings"],["Lat Pulldown","4x10","reps","Lats"],["Seated Cable Row","4x10","reps","Lats"],
     ["Chest Press Machine","4x10","reps","Chest"],["Shoulder Press Machine","3x10","reps","Shoulders"],["Pec Deck","3x12","reps","Chest"],
     ["Cable Crossover","3x12","reps","Chest"],["Smith Machine Squat","4x8","reps","Quadriceps"],["Assisted Pull-up","3x8","reps","Lats"],
     ["Assisted Dip","3x8","reps","Triceps"],["Cable Tricep Pushdown","3x12","reps","Triceps"],["Cable Face Pull","3x15","reps","Traps"],
-    ["Hip Abductor Machine","3x15","reps","Abductors"],["Hip Adductor Machine","3x15","reps","Adductors"],["Calf Raise Machine","4x15","reps","Calves"]],
+    ["Hip Abductor Machine","3x15","reps","Abductors"],["Hip Adductor Machine","3x15","reps","Adductors"],["Calf Raise Machine","4x15","reps","Calves"],["Cable Pec Deck Fly","3x10","reps","Chest"],["Resistance Band Pec Deck Fly","3x10","reps","Chest"],["T-Bar Row","3x10","reps","Lats"],["Cable Lat Pulldown","3x10","reps","Lats"],["Cable Straight-Arm Pulldown","3x10","reps","Lats"],["Resistance Band Straight-Arm Pulldown","3x10","reps","Lats"],["Face Pull","3x10","reps","Shoulders"],["Cuff Cable Lateral Raise","3x10","reps","Shoulders"],["Dumbbell Reverse Pec Deck Fly","3x10","reps","Shoulders"],["Cable Curl","3x10","reps","Biceps"],["Triceps Pushdown","3x10","reps","Triceps"],["Straight-Bar Triceps Pushdown","3x10","reps","Triceps"],["Reverse-Grip Triceps Pushdown","3x10","reps","Triceps"],["Overhead Cable Triceps Extension","3x10","reps","Triceps"],["Barbell Triceps Pushdown","3x10","reps","Triceps"],["Kettlebell Triceps Pushdown","3x10","reps","Triceps"],["Resistance Band Triceps Pushdown","3x10","reps","Triceps"],["Kettlebell Leg Press","3x10","reps","Quadriceps"],["Cable Leg Extension","3x10","reps","Quadriceps"],["Resistance Band Leg Extension","3x10","reps","Quadriceps"],["Seated Leg Curl","3x10","reps","Hamstrings"],["Dumbbell Seated Leg Curl","3x10","reps","Hamstrings"],["Barbell Lying Leg Curl","3x10","reps","Hamstrings"],["Kettlebell Lying Leg Curl","3x10","reps","Hamstrings"],["Resistance Band Seated Leg Curl","3x10","reps","Hamstrings"],["Cable Glute Kickback","3x10","reps","Glutes"],["Hip Abduction Machine","3x10","reps","Glutes"],["Cable Pull-Through","3x10","reps","Glutes"],["Standing Calf Raise","3x10","reps","Calves"],["Single-Leg Standing Calf Raise","3x10","reps","Calves"],["Dumbbell Standing Calf Raise","3x10","reps","Calves"],["Smith Machine Standing Calf Raise","3x10","reps","Calves"],["Donkey Standing Calf Raise","3x10","reps","Calves"],["Dumbbell Seated Calf Raise","3x10","reps","Calves"],["Kettlebell Standing Calf Raise","3x10","reps","Calves"],["Cable Standing Calf Raise","3x10","reps","Calves"],["Cable Seated Calf Raise","3x10","reps","Calves"],["Resistance Band Standing Calf Raise","3x10","reps","Calves"],["Resistance Band Seated Calf Raise","3x10","reps","Calves"],["Tall-Kneeling Pallof Press","3x10","reps","Abdominals"],["Reverse Hyperextension","3x10","reps","Glutes"],["Back Extension","3x10","reps","Abdominals"],["Dumbbell Reverse Hyperextension","3x10","reps","Glutes"],["Dumbbell Back Extension","3x10","reps","Abdominals"],["Barbell Reverse Hyperextension","3x10","reps","Glutes"],["Barbell Back Extension","3x10","reps","Abdominals"],["Kettlebell Reverse Hyperextension","3x10","reps","Glutes"],["Kettlebell Back Extension","3x10","reps","Abdominals"],["Cable Reverse Hyperextension","3x10","reps","Glutes"],["Cable Back Extension","3x10","reps","Abdominals"],["Resistance Band Reverse Hyperextension","3x10","reps","Glutes"],["Resistance Band Back Extension","3x10","reps","Abdominals"],["Hip Adduction Machine","3x10","reps","Adductors"]],
   "Bodyweight":[["Push-up","3x15","reps","Chest"],["Pull-up","3x8","reps","Lats"],["Chin-up","3x8","reps","Biceps"],
     ["Dip","3x10","reps","Triceps"],["Plank","3x45s","time","Abdominals"],["Sit-up","3x15","reps","Abdominals"],["Air Squat","3x20","reps","Quadriceps"],
     ["Burpee","3x10","reps","Cardio"],["Mountain Climbers","3x30s","time","Abdominals"],["Jump Squat","3x12","reps","Quadriceps"],
-    ["Handstand Hold","3x20s","time","Shoulders"],["Pistol Squat","3x5/leg","reps","Quadriceps"]],
+    ["Handstand Hold","3x20s","time","Shoulders"],["Pistol Squat","3x5/leg","reps","Quadriceps"],["Close-Grip Push-Up","3x10","reps","Chest"],["Deficit Push-Up","3x10","reps","Chest"],["Commando Pull-Up","3x10","reps","Lats"],["Weighted Chin-Up","3x10","reps","Lats"],["Barbell Pull-Up","3x10","reps","Lats"],["Barbell Inverted Row","3x10","reps","Traps"],["Kettlebell Chin-Up","3x10","reps","Lats"],["Kettlebell Inverted Row","3x10","reps","Traps"],["Bench Dip","3x10","reps","Triceps"],["Kettlebell Bench Dip","3x10","reps","Triceps"],["Barbell Sissy Squat","3x10","reps","Quadriceps"],["Kettlebell Sissy Squat","3x10","reps","Quadriceps"],["Kettlebell Nordic Hamstring Curl","3x10","reps","Hamstrings"],["Cable Nordic Hamstring Curl","3x10","reps","Hamstrings"],["Glute Bridge","3x10","reps","Glutes"],["Weighted Glute Bridge","3x10","reps","Glutes"],["Dumbbell Glute Bridge","3x10","reps","Glutes"],["Dumbbell Frog Pump","3x10","reps","Glutes"],["Kettlebell Frog Pump","3x10","reps","Glutes"],["Cable Glute Bridge","3x10","reps","Glutes"],["Tibialis Raise","3x10","reps","Calves"],["Dumbbell Tibialis Raise","3x10","reps","Calves"],["Barbell Tibialis Raise","3x10","reps","Calves"],["Kettlebell Tibialis Raise","3x10","reps","Calves"],["Stability Ball Plank","3x10","reps","Abdominals"],["Hip Dip Side Plank","3x10","reps","Abdominals"],["Toes-to-Bar Hanging Leg Raise","3x10","reps","Abdominals"],["Dead Bug","3x10","reps","Abdominals"],["Dragon Flag","3x10","reps","Abdominals"],["Dumbbell Dead Bug","3x10","reps","Abdominals"],["Dumbbell Hollow Body Hold","3x10","reps","Abdominals"],["Barbell Bird Dog","3x10","reps","Abdominals"],["Kettlebell Side Plank","3x10","reps","Abdominals"],["Cable Hanging Leg Raise","3x10","reps","Abdominals"],["Cable Dragon Flag","3x10","reps","Abdominals"],["Resistance Band Dead Bug","3x10","reps","Abdominals"],["Muscle-Up","3x10","reps","Lats"],["Front Lever","3x10","reps","Lats"],["Dumbbell Handstand Push-Up","3x10","reps","Shoulders"],["Dumbbell L-Sit","3x10","reps","Abdominals"],["Barbell Muscle-Up","3x10","reps","Lats"],["Barbell Pistol Squat","3x10","reps","Quadriceps"],["Barbell Front Lever","3x10","reps","Lats"],["Kettlebell Handstand Push-Up","3x10","reps","Shoulders"],["Kettlebell L-Sit","3x10","reps","Abdominals"],["Cable Muscle-Up","3x10","reps","Lats"],["Cable Pistol Squat","3x10","reps","Quadriceps"],["Cable Front Lever","3x10","reps","Lats"],["Resistance Band Handstand Push-Up","3x10","reps","Shoulders"],["Resistance Band L-Sit","3x10","reps","Abdominals"],["Outdoor Running","3x30s","time","Cardio"],["Zone 2 Outdoor Running","3x30s","time","Cardio"],["Tempo Outdoor Running","3x30s","time","Cardio"],["Interval Outdoor Running","3x30s","time","Cardio"],["Hill Sprint Outdoor Running","3x30s","time","Cardio"],["Fartlek Outdoor Running","3x30s","time","Cardio"],["Long Run Outdoor Running","3x30s","time","Cardio"],["Recovery Outdoor Running","3x30s","time","Cardio"],["Cat-Cow Stretch","3x10","reps","Abdominals"],["Cossack Squat","3x10","reps","Adductors"],["Dumbbell Cossack Squat","3x10","reps","Adductors"],["Barbell Cossack Squat","3x10","reps","Adductors"],["Kettlebell Cossack Squat","3x10","reps","Adductors"],["Cable Cossack Squat","3x10","reps","Adductors"],["Resistance Band Cossack Squat","3x10","reps","Adductors"],["Bear Crawl","3x10","reps","Abdominals"],["Crab Walk","3x10","reps","Triceps"],["Dumbbell Bear Crawl","3x10","reps","Abdominals"],["Dumbbell Crab Walk","3x10","reps","Triceps"],["Barbell Bear Crawl","3x10","reps","Abdominals"],["Barbell Crab Walk","3x10","reps","Triceps"],["Kettlebell Bear Crawl","3x10","reps","Abdominals"],["Kettlebell Crab Walk","3x10","reps","Triceps"],["Cable Bear Crawl","3x10","reps","Abdominals"],["Cable Crab Walk","3x10","reps","Triceps"],["Resistance Band Bear Crawl","3x10","reps","Abdominals"],["Resistance Band Crab Walk","3x10","reps","Triceps"],["Broad Jump","3x10","reps","Glutes"],["Skater Jump","3x10","reps","Glutes"],["Dumbbell Broad Jump","3x10","reps","Glutes"],["Dumbbell Skater Jump","3x10","reps","Glutes"],["Barbell Broad Jump","3x10","reps","Glutes"],["Barbell Skater Jump","3x10","reps","Glutes"],["Kettlebell Broad Jump","3x10","reps","Glutes"],["Kettlebell Skater Jump","3x10","reps","Glutes"],["Cable Broad Jump","3x10","reps","Glutes"],["Cable Skater Jump","3x10","reps","Glutes"],["Resistance Band Broad Jump","3x10","reps","Glutes"],["Resistance Band Skater Jump","3x10","reps","Glutes"]],
   "Cardio Machine":[["Treadmill","20 min","time","Cardio"],["Rowing Machine","2000m","distance","Cardio"],
     ["Ski Erg","1000m","distance","Cardio"],["Assault Bike","15 min","time","Cardio"],["Stationary Bike","30 min","time","Cardio"],
-    ["Elliptical","25 min","time","Cardio"],["Stairmaster","20 min","time","Cardio"],["Jacob's Ladder","10 min","time","Cardio"]],
+    ["Elliptical","25 min","time","Cardio"],["Stairmaster","20 min","time","Cardio"],["Jacob's Ladder","10 min","time","Cardio"],["Treadmill Running","15 min","time","Cardio"],["Zone 2 Treadmill Running","15 min","time","Cardio"],["Tempo Treadmill Running","15 min","time","Cardio"],["Interval Treadmill Running","15 min","time","Cardio"],["Incline Treadmill Running","15 min","time","Cardio"],["Sprint Treadmill Running","15 min","time","Cardio"],["Recovery Treadmill Running","15 min","time","Cardio"],["Stationary Cycling","15 min","time","Cardio"],["Stair Climber","15 min","time","Cardio"],["Elliptical Trainer","15 min","time","Cardio"]],
   "Cardio Outdoor":[["Running","5 km","distance","Cardio"],["Cycling","20 km","distance","Cardio"],["Swimming","1500m","distance","Cardio"],
-    ["Walking","30 min","time","Cardio"],["Hiking","60 min","time","Cardio"],["Jump Rope","10 min","time","Cardio"]],
+    ["Walking","30 min","time","Cardio"],["Hiking","60 min","time","Cardio"],["Jump Rope","10 min","time","Cardio"],["Single-Under Jump Rope","15 min","time","Cardio"],["Double-Under Jump Rope","15 min","time","Cardio"],["Cross-Over Jump Rope","15 min","time","Cardio"],["High-Knee Jump Rope","15 min","time","Cardio"],["Boxer Step Jump Rope","15 min","time","Cardio"]],
   "Hyrox Station":[["Sled Push","4x25m","distance","Quadriceps"],["Sled Pull","4x25m","distance","Lats"],
     ["Sandbag Lunges","4x25m","distance","Quadriceps"],["Wall Balls","4x15","reps","Quadriceps"],["Burpee Broad Jumps","4x10","reps","Cardio"],
-    ["Farmer's Carry (station)","4x200m","distance","Forearms"],["Ski Erg (station)","4x250m","distance","Cardio"],["Rowing (station)","4x250m","distance","Cardio"]],
+    ["Farmer's Carry (station)","4x200m","distance","Forearms"],["Ski Erg (station)","4x250m","distance","Cardio"],["Rowing (station)","4x250m","distance","Cardio"],["SkiErg","3x30s","time","Lats"],["Zone 2 SkiErg","3x30s","time","Lats"],["Sprint Interval SkiErg","3x30s","time","Lats"],["Double-Pole SkiErg","3x30s","time","Lats"],["Alternating-Arm SkiErg","3x30s","time","Lats"],["Heavy Sled Push","4x20m","distance","Quadriceps"],["Light Sprint Sled Push","4x20m","distance","Quadriceps"],["Low-Handle Sled Push","4x20m","distance","Quadriceps"],["High-Handle Sled Push","4x20m","distance","Quadriceps"],["Backward Sled Pull","4x20m","distance","Lats"],["Rope Sled Pull","4x20m","distance","Lats"],["Hand-over-Hand Sled Pull","4x20m","distance","Lats"],["Harness Sled Pull","4x20m","distance","Lats"],["Burpee Broad Jump","4x20m","distance","Cardio"],["Rowing","3x30s","time","Lats"],["Zone 2 Rowing","3x30s","time","Lats"],["Sprint Interval Rowing","3x30s","time","Lats"],["Tempo Rowing","3x30s","time","Lats"],["500 m Time Trial Rowing","3x30s","time","Lats"],["2000 m Time Trial Rowing","3x30s","time","Lats"],["Farmers Carry","4x20m","distance","Forearms"],["Heavy Farmers Carry","4x20m","distance","Forearms"],["Single-Arm Suitcase Farmers Carry","4x20m","distance","Forearms"],["Trap-Bar Farmers Carry","4x20m","distance","Forearms"],["Overhead Farmers Carry","4x20m","distance","Forearms"],["Sandbag Walking Lunge","4x20m","distance","Quadriceps"],["Wall Ball","4x20m","distance","Quadriceps"],["Dumbbell Sled Push","4x20m","distance","Quadriceps"],["Dumbbell Sled Pull","4x20m","distance","Lats"],["Dumbbell Burpee Broad Jump","4x20m","distance","Cardio"],["Dumbbell Farmers Carry","4x20m","distance","Forearms"],["Dumbbell Wall Ball","4x20m","distance","Quadriceps"],["Barbell Sled Push","4x20m","distance","Quadriceps"],["Barbell Sled Pull","4x20m","distance","Lats"],["Barbell Burpee Broad Jump","4x20m","distance","Cardio"],["Barbell Farmers Carry","4x20m","distance","Forearms"],["Barbell Wall Ball","4x20m","distance","Quadriceps"],["Kettlebell Sled Push","4x20m","distance","Quadriceps"],["Kettlebell Sled Pull","4x20m","distance","Lats"],["Kettlebell Burpee Broad Jump","4x20m","distance","Cardio"],["Kettlebell Farmers Carry","4x20m","distance","Forearms"],["Kettlebell Wall Ball","4x20m","distance","Quadriceps"],["Cable Sled Push","4x20m","distance","Quadriceps"],["Cable Sled Pull","4x20m","distance","Lats"],["Cable Burpee Broad Jump","4x20m","distance","Cardio"],["Cable Farmers Carry","4x20m","distance","Forearms"],["Cable Wall Ball","4x20m","distance","Quadriceps"],["Resistance Band Sled Push","4x20m","distance","Quadriceps"],["Resistance Band Sled Pull","4x20m","distance","Lats"],["Resistance Band Burpee Broad Jump","4x20m","distance","Cardio"],["Resistance Band Farmers Carry","4x20m","distance","Forearms"],["Resistance Band Wall Ball","4x20m","distance","Quadriceps"]],
   "Mobility / Stretch":[["Hip Flexor Stretch","2x30s/side","time","Mobility"],["Couch Stretch","2x45s/side","time","Mobility"],
     ["Pigeon Pose","2x45s/side","time","Mobility"],["World's Greatest Stretch","2x5/side","reps","Mobility"],
     ["Thoracic Rotation","2x10/side","reps","Mobility"],["Shoulder Dislocate","2x10","reps","Mobility"],["Cat-Cow","2x10","reps","Mobility"],
     ["90/90 Hip Switch","2x8/side","reps","Mobility"],["Hamstring Stretch","2x30s/side","time","Mobility"],["Calf Stretch","2x30s/side","time","Mobility"],
     ["Ankle Circles","2x10/side","reps","Mobility"],["Foam Rolling — Quads","2 min/side","time","Mobility"],
-    ["Foam Rolling — Back","2 min","time","Mobility"],["Band Pull-Apart","3x15","reps","Traps"],["Deep Squat Hold","3x30s","time","Mobility"]]
+    ["Foam Rolling — Back","2 min","time","Mobility"],["Band Pull-Apart","3x15","reps","Traps"],["Deep Squat Hold","3x30s","time","Mobility"],["Dumbbell Spanish Squat","3x10","reps","Quadriceps"],["Cable Spanish Squat","3x10","reps","Quadriceps"],["Child's Pose","3x10","reps","Lats"],["Downward-Facing Dog","3x10","reps","Hamstrings"],["Warrior I","3x10","reps","Quadriceps"],["Warrior II","3x10","reps","Quadriceps"],["Boat Pose","3x10","reps","Abdominals"],["Dumbbell Boat Pose","3x10","reps","Abdominals"],["Barbell Boat Pose","3x10","reps","Abdominals"],["Kettlebell Boat Pose","3x10","reps","Abdominals"],["Cable Boat Pose","3x10","reps","Abdominals"],["Resistance Band Boat Pose","3x10","reps","Abdominals"]],
+  "Kettlebell":[["Dumbbell Goblet Squat","3x10","reps","Quadriceps"],["Kettlebell Swing","3x10","reps","Glutes"],["Turkish Get-Up","3x10","reps","Cardio"],["Kettlebell Clean","3x10","reps","Glutes"],["Kettlebell Snatch","3x10","reps","Glutes"],["Kettlebell Windmill","3x10","reps","Abdominals"],["Dumbbell Turkish Get-Up","3x10","reps","Cardio"],["Barbell Turkish Get-Up","3x10","reps","Cardio"],["Kettlebell Turkish Get-Up","3x10","reps","Cardio"],["Cable Turkish Get-Up","3x10","reps","Cardio"],["Resistance Band Turkish Get-Up","3x10","reps","Cardio"]],
+  "Conditioning":[["Kettlebell Russian Twist","3x10","reps","Abdominals"],["Battle Rope Alternating Waves","3x10","reps","Shoulders"],["Battle Rope Slams","3x10","reps","Shoulders"],["Medicine Ball Slam","3x10","reps","Lats"],["Tire Flip","3x10","reps","Glutes"],["Atlas Stone Load","3x10","reps","Glutes"],["Yoke Walk","3x10","reps","Traps"],["Log Press","3x10","reps","Shoulders"],["Dumbbell Tire Flip","3x10","reps","Glutes"],["Dumbbell Atlas Stone Load","3x10","reps","Glutes"],["Dumbbell Yoke Walk","3x10","reps","Traps"],["Dumbbell Log Press","3x10","reps","Shoulders"],["Barbell Tire Flip","3x10","reps","Glutes"],["Barbell Atlas Stone Load","3x10","reps","Glutes"],["Barbell Yoke Walk","3x10","reps","Traps"],["Barbell Log Press","3x10","reps","Shoulders"],["Kettlebell Tire Flip","3x10","reps","Glutes"],["Kettlebell Atlas Stone Load","3x10","reps","Glutes"],["Kettlebell Yoke Walk","3x10","reps","Traps"],["Kettlebell Log Press","3x10","reps","Shoulders"],["Cable Tire Flip","3x10","reps","Glutes"],["Cable Atlas Stone Load","3x10","reps","Glutes"],["Cable Yoke Walk","3x10","reps","Traps"],["Cable Log Press","3x10","reps","Shoulders"],["Resistance Band Tire Flip","3x10","reps","Glutes"],["Resistance Band Atlas Stone Load","3x10","reps","Glutes"],["Resistance Band Yoke Walk","3x10","reps","Traps"],["Resistance Band Log Press","3x10","reps","Shoulders"],["Box Jump","3x10","reps","Quadriceps"],["Depth Jump","3x10","reps","Quadriceps"],["Dumbbell Box Jump","3x10","reps","Quadriceps"],["Dumbbell Depth Jump","3x10","reps","Quadriceps"],["Barbell Box Jump","3x10","reps","Quadriceps"],["Barbell Depth Jump","3x10","reps","Quadriceps"],["Kettlebell Box Jump","3x10","reps","Quadriceps"],["Kettlebell Depth Jump","3x10","reps","Quadriceps"],["Cable Box Jump","3x10","reps","Quadriceps"],["Cable Depth Jump","3x10","reps","Quadriceps"],["Resistance Band Box Jump","3x10","reps","Quadriceps"],["Resistance Band Depth Jump","3x10","reps","Quadriceps"],["Medicine Ball Chest Pass","3x10","reps","Chest"],["Medicine Ball Rotational Throw","3x10","reps","Abdominals"]]
 };
 
 // Names that appear only in the Hyrox 8-week Plan (slightly different wording than library entries)
@@ -211,8 +213,11 @@ const state = {
   // SHARED PROFILE — single source of truth for weight/height/age/gender/activity/goal
   profile: Object.assign({
     weight:101, height:180, age:25, gender:"male",
-    activityMultiplier:1.465, goalDelta:-400
+    activityMultiplier:1.465, goalDelta:-400,
+    name:"", hyroxExperience:"first-timer", trainingDays:5,
+    equipment:["Barbell","Dumbbell","Machines","Sled","Rower","Ski Erg","Kettlebell"]
   }, LS.get("hx_profile",{})),
+  onboardingComplete: LS.get("hx_onboarding_complete", null), // resolved to true/false at boot in resolveOnboardingStatus()
   nutrition: Object.assign({proteinPct:30,carbPct:45,fatPct:25,fibreTarget:30},
     LS.get("hx_nutrition",{})),
   mealOpen: null,
@@ -245,6 +250,7 @@ const state = {
   chartMetric: "sets",
   calendarMonthOffset: 0,
   bodyDistWeekOffset: 0,
+  progressExercise: null,
   timer: null
 };
 
@@ -262,6 +268,7 @@ function persist(){
   LS.set("hx_active_week", state.activeWeek);
   LS.set("hx_active_level", state.activeLevel);
   LS.set("hx_profile", state.profile);
+  LS.set("hx_onboarding_complete", state.onboardingComplete);
   LS.set("hx_completed", state.completed);
   LS.set("hx_nutrition", state.nutrition);
   LS.set("hx_bodylog", state.bodylog);
@@ -296,8 +303,23 @@ function runMigrations(){
   }
 }
 
+/* Decide once whether to show the onboarding wizard. Never interrupts a returning
+   user: if hx_onboarding_complete was never set but real usage data already exists
+   (this app predates the onboarding feature), it's silently marked complete. */
+function resolveOnboardingStatus(){
+  if(state.onboardingComplete !== null) return; // already resolved on a prior boot
+  const hasExistingData = state.bodylog.length>0 || state.workoutLog.length>0 ||
+    Object.keys(state.completed).length>0 || state.routines.length>0;
+  state.onboardingComplete = hasExistingData ? true : false;
+  LS.set("hx_onboarding_complete", state.onboardingComplete);
+}
+
 function render(){
   try{
+    if(!state.onboardingComplete){
+      renderOnboarding();
+      return;
+    }
     renderApp();
     if(state.session) ensureElapsedTimerRunning();
     else stopElapsedTimer();
@@ -464,7 +486,7 @@ function renderHomeTab(){
 
   return `
     <div style="margin-bottom:4px;">
-      <div style="font-size:13px;color:var(--muted);font-weight:600;">${greeting()}</div>
+      <div style="font-size:13px;color:var(--muted);font-weight:600;">${greeting()}${state.profile.name?', '+state.profile.name:''}</div>
       <div style="font-size:18px;font-weight:800;">${dateStr}</div>
     </div>
 
@@ -1449,6 +1471,8 @@ function renderBodyTab(){
   return `
     <div class="eyebrow-label" style="margin-top:4px;">Your Profile</div>
     <div class="info-box" style="padding:14px;">
+      <label style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);">Name</label>
+      <input type="text" id="p-name" value="${p.name||''}" placeholder="Optional" style="display:block;width:100%;background:var(--surface-alt);border-radius:8px;padding:8px;margin:4px 0 12px;font-size:13px;color:var(--text);">
       <div class="grid2">
         <div><label style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);">Weight (kg)</label>
           <div style="padding:8px;margin-top:4px;font-size:13px;color:var(--accent);font-weight:700;">${p.weight} <span style="font-size:10px;color:var(--muted);font-weight:400;">(from log)</span></div></div>
@@ -1467,9 +1491,21 @@ function renderBodyTab(){
         ${ACTIVITY_MULTIPLIERS.map(a=>`<option value="${a.mult}" ${p.activityMultiplier===a.mult?'selected':''}>${a.label}</option>`).join("")}
       </select>
       <label style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);display:block;margin:6px 0 4px;">Goal</label>
-      <select class="select-input" id="p-goal" style="margin-bottom:0;">
+      <select class="select-input" id="p-goal">
         ${GOAL_OPTIONS.map(g=>`<option value="${g.delta}" ${p.goalDelta===g.delta?'selected':''}>${g.label}</option>`).join("")}
       </select>
+      <label style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);display:block;margin:6px 0 4px;">Hyrox Experience</label>
+      <select class="select-input" id="p-hyrox-exp">
+        ${HYROX_EXPERIENCE_OPTIONS.map(o=>`<option value="${o.key}" ${p.hyroxExperience===o.key?'selected':''}>${o.label}</option>`).join("")}
+      </select>
+      <label style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);display:block;margin:6px 0 4px;">Training Days / Week</label>
+      <select class="select-input" id="p-training-days" style="margin-bottom:0;">
+        ${[2,3,4,5,6,7].map(n=>`<option value="${n}" ${p.trainingDays===n?'selected':''}>${n} days/week</option>`).join("")}
+      </select>
+      <label style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);display:block;margin:10px 0 4px;">Available Equipment</label>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">
+        ${EQUIPMENT_OPTIONS.map(eq=>`<button class="cat-chip ${p.equipment.includes(eq)?'active':''}" data-profile-equipment="${eq}">${eq}</button>`).join("")}
+      </div>
     </div>
 
     <div class="grid2" style="margin-top:10px;margin-bottom:6px;">
@@ -1947,6 +1983,140 @@ function renderCalendarMonth(monthOffset){
   `;
 }
 
+/* =========================================================
+   ADVANCED PROGRESS ANALYTICS — additional stats/trends/charts
+========================================================= */
+function computeLongestStreak(){
+  const dates = Array.from(activityDates()).sort();
+  if(dates.length===0) return 0;
+  let longest = 1, cur = 1;
+  for(let i=1;i<dates.length;i++){
+    const prev = new Date(dates[i-1]);
+    const currD = new Date(dates[i]);
+    const diffDays = Math.round((currD-prev)/86400000);
+    if(diffDays===1){ cur++; longest = Math.max(longest,cur); }
+    else if(diffDays>1){ cur = 1; }
+  }
+  return longest;
+}
+
+function totalTrainingTimeMin(){
+  return state.workoutLog.reduce((a,s)=>a+(s.durationMin||0), 0);
+}
+
+function workoutsPerWeekAvg(){
+  if(state.workoutLog.length===0) return 0;
+  const dates = state.workoutLog.map(s=>new Date(s.date)).sort((a,b)=>a-b);
+  const spanDays = Math.max(1, Math.round((dates[dates.length-1]-dates[0])/86400000)+1);
+  return +(state.workoutLog.length / (spanDays/7)).toFixed(1);
+}
+
+function bodyWeightTrend(limit=20){
+  return state.bodylog.slice().reverse() // bodylog is stored newest-first; reverse to chronological
+    .filter(e=>e.weight)
+    .map(e=>({date:e.date, value:Number(e.weight)}))
+    .slice(-limit);
+}
+
+/* All exercise names that have at least one completed weighted set in history — for the exercise picker */
+function exercisesWithHistory(){
+  const names = new Set();
+  state.workoutLog.forEach(s=> s.exercises.forEach(ex=>{
+    if(ex.sets.some(st=>{ const w=parseFloat(st.weight), r=parseFloat(st.reps); return !isNaN(w)&&!isNaN(r)&&r>0; })) names.add(ex.name);
+  }));
+  return Array.from(names).sort();
+}
+
+/* Chronological best-set-per-session series for one exercise: weight + estimated 1RM over time */
+function exerciseProgressTrend(name, limit=20){
+  const sessions = state.workoutLog.slice().reverse(); // oldest first
+  const out = [];
+  sessions.forEach(s=>{
+    const ex = s.exercises.find(e=>e.name===name);
+    if(!ex) return;
+    const validSets = ex.sets.filter(st=>{
+      const w=parseFloat(st.weight), r=parseFloat(st.reps);
+      return !isNaN(w) && !isNaN(r) && r>0 && isCountingSet(st);
+    });
+    if(!validSets.length) return;
+    let best = validSets[0];
+    validSets.forEach(st=>{
+      const w=parseFloat(st.weight), bw=parseFloat(best.weight);
+      if(w>bw || (w===bw && parseFloat(st.reps)>parseFloat(best.reps))) best = st;
+    });
+    const w = parseFloat(best.weight), r = parseFloat(best.reps);
+    out.push({date:s.date, weight:w, oneRM: Math.round(estimatedOneRM(w,r)*10)/10});
+  });
+  return out.slice(-limit);
+}
+
+function monthlyComparison(){
+  const now = new Date();
+  const thisMonthKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const lastMonthDate = new Date(now.getFullYear(), now.getMonth()-1, 1);
+  const lastMonthKey = `${lastMonthDate.getFullYear()}-${String(lastMonthDate.getMonth()+1).padStart(2,'0')}`;
+  function statsFor(monthKey){
+    const sessions = state.workoutLog.filter(s=>s.date.startsWith(monthKey));
+    return {
+      sessions: sessions.length,
+      volume: Math.round(sessions.reduce((a,s)=>a+(s.volume||0),0)),
+      minutes: sessions.reduce((a,s)=>a+(s.durationMin||0),0)
+    };
+  }
+  return { thisMonth: statsFor(thisMonthKey), lastMonth: statsFor(lastMonthKey) };
+}
+
+function calorieProteinTrend(days=30){
+  const out = [];
+  for(let i=days-1;i>=0;i--){
+    const d = new Date(); d.setDate(d.getDate()-i);
+    const ds = d.toISOString().slice(0,10);
+    const foods = foodsForDate(ds);
+    out.push({
+      date: ds,
+      kcal: foods.reduce((a,f)=>a+Number(f.calories||0),0),
+      protein: foods.reduce((a,f)=>a+Number(f.protein||0),0)
+    });
+  }
+  return out;
+}
+
+/* Simple line/dot sparkline chart shared by weight/1RM/calorie trends.
+   points: [{date,value}]. Draws nothing (returns empty state) if <2 points. */
+function sparklineChart(points, opts={}){
+  const color = opts.color || "var(--accent)";
+  const unit = opts.unit || "";
+  if(points.length < 2){
+    return `<div class="empty-note" style="padding:20px 0;">Not enough data yet — log a few more entries to see a trend line here.</div>`;
+  }
+  const w=300, h=110, padX=8, padY=14;
+  const vals = points.map(p=>p.value);
+  const min = Math.min(...vals), max = Math.max(...vals);
+  const range = (max-min) || 1;
+  const stepX = (w-padX*2) / (points.length-1);
+  const coords = points.map((p,i)=>{
+    const x = padX + i*stepX;
+    const y = padY + (1 - (p.value-min)/range) * (h-padY*2);
+    return {x,y,v:p.value};
+  });
+  const pathD = coords.map((c,i)=> (i===0?'M':'L')+c.x.toFixed(1)+','+c.y.toFixed(1)).join(' ');
+  const dots = coords.map((c,i)=> i===coords.length-1 ?
+    `<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="3.5" fill="${color}"/>` : '').join('');
+  const first = points[0].value, last = points[points.length-1].value;
+  const delta = +(last-first).toFixed(1);
+  return `
+    <svg width="100%" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+      <path d="${pathD}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+      ${dots}
+    </svg>
+    <div class="row-between" style="margin-top:2px;">
+      <span style="font-size:11px;color:var(--muted);">${points[0].date}</span>
+      <span class="mono" style="font-size:12px;font-weight:800;color:${delta===0?'var(--muted)':delta>0?'var(--accent)':'var(--mint)'};">${delta>0?'+':''}${delta}${unit} <span style="color:var(--muted);font-weight:400;">since start</span></span>
+      <span style="font-size:11px;color:var(--muted);">${points[points.length-1].date}</span>
+    </div>
+  `;
+}
+
 function renderProgressTab(){
   let total=0, done=0;
   const perWeek = WEEKS.map(w=>{
@@ -1964,13 +2134,20 @@ function renderProgressTab(){
   const prevMuscles = computeMuscleDistribution(30,30);
   const totalVolume = state.workoutLog.reduce((a,s)=>a+(s.volume||0),0);
   const totalSets = state.workoutLog.reduce((a,s)=>a+s.exercises.reduce((x,e)=>x+e.sets.length,0),0);
+  const longestStreak = computeLongestStreak();
+  const trainingHours = Math.floor(totalTrainingTimeMin()/60);
+  const trainingMinsRem = totalTrainingTimeMin()%60;
+  const freqAvg = workoutsPerWeekAvg();
 
   return `
     <div class="eyebrow-label" style="margin-top:4px;">Overview</div>
     <div class="grid2" style="margin-bottom:16px;">
-      <div class="stat-card"><div class="stat-label">Streak</div><div class="stat-value" style="color:var(--accent);">🔥 ${streak}<span class="stat-unit">days</span></div></div>
+      <div class="stat-card"><div class="stat-label">Current Streak</div><div class="stat-value" style="color:var(--accent);">🔥 ${streak}<span class="stat-unit">days</span></div></div>
+      <div class="stat-card"><div class="stat-label">Longest Streak</div><div class="stat-value" style="color:var(--steel);">${longestStreak}<span class="stat-unit">days</span></div></div>
       <div class="stat-card"><div class="stat-label">Freestyle Sessions</div><div class="stat-value">${sessions}</div></div>
+      <div class="stat-card"><div class="stat-label">Avg Frequency</div><div class="stat-value">${freqAvg}<span class="stat-unit">/wk</span></div></div>
       <div class="stat-card"><div class="stat-label">Total Volume</div><div class="stat-value">${Math.round(totalVolume).toLocaleString()}<span class="stat-unit">kg</span></div></div>
+      <div class="stat-card"><div class="stat-label">Total Training Time</div><div class="stat-value">${trainingHours}<span class="stat-unit">h ${trainingMinsRem}m</span></div></div>
       <div class="stat-card"><div class="stat-label">Total Sets Logged</div><div class="stat-value">${totalSets}</div></div>
     </div>
 
@@ -2004,6 +2181,73 @@ function renderProgressTab(){
       </div>
     </div>
 
+    <div class="eyebrow-label">Body Weight Trend</div>
+    <div class="info-box" style="padding:14px;">
+      ${sparklineChart(bodyWeightTrend(20), {color:"var(--steel)", unit:"kg"})}
+    </div>
+
+    <div class="eyebrow-label">Exercise Progress</div>
+    <div class="info-box" style="padding:14px;">
+      ${exercisesWithHistory().length===0 ? `<div class="empty-note">Log the same exercise across a few workouts to see its strength trend here.</div>` : `
+        <select class="select-input" id="progress-exercise-select" style="margin-bottom:12px;">
+          ${exercisesWithHistory().map(n=>`<option value="${n}" ${state.progressExercise===n?'selected':''}>${n}</option>`).join("")}
+        </select>
+        ${(() => {
+          const exName = state.progressExercise && exercisesWithHistory().includes(state.progressExercise) ? state.progressExercise : exercisesWithHistory()[0];
+          const trend = exerciseProgressTrend(exName, 20);
+          const weightPoints = trend.map(t=>({date:t.date, value:t.weight}));
+          const ormPoints = trend.map(t=>({date:t.date, value:t.oneRM}));
+          return `
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">Top Set Weight</div>
+            ${sparklineChart(weightPoints, {color:"var(--accent)", unit:"kg"})}
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--muted);margin:14px 0 4px;">Estimated 1RM</div>
+            ${sparklineChart(ormPoints, {color:"var(--mint)", unit:"kg"})}
+          `;
+        })()}
+      `}
+    </div>
+
+    <div class="eyebrow-label">This Month vs Last Month</div>
+    <div class="info-box" style="padding:14px;">
+      ${(() => {
+        const mc = monthlyComparison();
+        const row = (label, a, b, unit) => {
+          const delta = a-b;
+          const pct = b>0 ? Math.round(delta/b*100) : (a>0?100:0);
+          return `<div class="row-between" style="padding:8px 0;border-top:1px solid var(--border);">
+            <span style="font-size:13px;font-weight:700;">${label}</span>
+            <span style="display:flex;gap:10px;align-items:center;">
+              <span class="mono" style="font-size:13px;">${a}${unit}</span>
+              <span class="mono" style="font-size:11px;color:${delta>=0?'var(--mint)':'var(--accent)'};font-weight:800;">${delta>=0?'+':''}${pct}%</span>
+            </span>
+          </div>`;
+        };
+        return `
+          <div class="row-between" style="margin-bottom:4px;">
+            <span style="font-size:11px;color:var(--muted);font-weight:700;">THIS MONTH</span>
+            <span style="font-size:11px;color:var(--muted);font-weight:700;">VS LAST MONTH</span>
+          </div>
+          ${row("Sessions", mc.thisMonth.sessions, mc.lastMonth.sessions, "")}
+          ${row("Volume", mc.thisMonth.volume.toLocaleString(), mc.lastMonth.volume, "kg")}
+          ${row("Training Time", mc.thisMonth.minutes, mc.lastMonth.minutes, "m")}
+        `;
+      })()}
+    </div>
+
+    <div class="eyebrow-label">Calories & Protein — Last 30 Days</div>
+    <div class="info-box" style="padding:14px;">
+      ${(() => {
+        const ct = calorieProteinTrend(30).filter(d=>d.kcal>0 || d.protein>0);
+        if(ct.length<2) return `<div class="empty-note">Log food across a few more days to see calorie and protein trends here.</div>`;
+        return `
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">Calories</div>
+          ${sparklineChart(ct.map(d=>({date:d.date,value:Math.round(d.kcal)})), {color:"var(--accent)", unit:"kcal"})}
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--muted);margin:14px 0 4px;">Protein</div>
+          ${sparklineChart(ct.map(d=>({date:d.date,value:Math.round(d.protein)})), {color:"var(--steel)", unit:"g"})}
+        `;
+      })()}
+    </div>
+
     <div class="eyebrow-label">Body Distribution</div>
     <div class="info-box" style="padding:14px;">
       ${renderBodyDistribution(state.bodyDistWeekOffset||0)}
@@ -2032,7 +2276,7 @@ function renderProgressTab(){
    SETTINGS TAB — export/import + workout settings
 ========================================================= */
 const ALL_DATA_KEYS = ["hx_completed","hx_active_week","hx_active_level","hx_profile","hx_nutrition","hx_bodylog","hx_custom_exercises",
-  "hx_workout_log","hx_food_log","hx_routines","hx_calc","hx_settings","hx_rest_duration","hx_active_session","hx_prs","hx_tab","hx_schema_version"];
+  "hx_workout_log","hx_food_log","hx_routines","hx_calc","hx_settings","hx_rest_duration","hx_active_session","hx_prs","hx_onboarding_complete","hx_tab","hx_schema_version"];
 
 function exportAllJSON(){
   const data = { app:"ignyt", version:1, schemaVersion:SCHEMA_VERSION, exportedAt:new Date().toISOString(), data:{} };
@@ -2143,6 +2387,99 @@ function settingToggle(key, label, desc){
     </div>
     ${desc?`<div style="font-size:12px;color:var(--muted);margin-top:4px;max-width:85%;">${desc}</div>`:""}
   </div>`;
+}
+
+/* =========================================================
+   ONBOARDING — shown once, only for genuinely new installs
+========================================================= */
+const HYROX_EXPERIENCE_OPTIONS = [
+  {key:"first-timer", label:"Never raced Hyrox"},
+  {key:"some-experience", label:"Raced 1–2 times"},
+  {key:"experienced", label:"Raced multiple times"}
+];
+const EQUIPMENT_OPTIONS = ["Barbell","Dumbbell","Machines","Sled","Rower","Ski Erg","Kettlebell","Bodyweight Only"];
+
+function renderOnboarding(){
+  const root = document.getElementById("app");
+  const p = state.profile;
+  root.innerHTML = `
+    <div style="padding:24px 20px 100px;max-width:480px;margin:0 auto;">
+      <div style="text-align:center;margin-bottom:24px;">
+        <div style="font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);font-weight:800;margin-bottom:4px;">Welcome to</div>
+        <h1 style="font-size:32px;font-weight:900;margin:0;">IGNYT</h1>
+        <div style="font-size:13px;color:var(--muted);margin-top:6px;">A few quick details so your plan, calories, and macros start off right.</div>
+      </div>
+
+      <label style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:4px;">Your Name</label>
+      <input type="text" id="ob-name" value="${p.name||''}" placeholder="What should we call you?" style="width:100%;background:var(--surface-alt);border-radius:8px;padding:11px;font-size:14px;color:var(--text);margin-bottom:14px;border:none;">
+
+      <div class="grid2" style="margin-bottom:14px;">
+        <div><label style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);">Age</label>
+          <input type="number" id="ob-age" value="${p.age}" style="display:block;width:100%;background:var(--surface-alt);border-radius:8px;padding:11px;margin-top:4px;font-size:14px;color:var(--text);border:none;"></div>
+        <div><label style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);">Gender</label>
+          <div style="display:flex;gap:6px;margin-top:4px;">
+            <button class="cat-chip ${p.gender==='male'?'active':''}" data-ob-gender="male" style="flex:1;text-align:center;">Male</button>
+            <button class="cat-chip ${p.gender==='female'?'active':''}" data-ob-gender="female" style="flex:1;text-align:center;">Female</button>
+          </div></div>
+        <div><label style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);">Height (cm)</label>
+          <input type="number" id="ob-height" value="${p.height}" style="display:block;width:100%;background:var(--surface-alt);border-radius:8px;padding:11px;margin-top:4px;font-size:14px;color:var(--text);border:none;"></div>
+        <div><label style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);">Weight (kg)</label>
+          <input type="number" id="ob-weight" value="${p.weight}" style="display:block;width:100%;background:var(--surface-alt);border-radius:8px;padding:11px;margin-top:4px;font-size:14px;color:var(--accent);font-weight:700;border:none;"></div>
+      </div>
+
+      <label style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:4px;">Primary Goal</label>
+      <select class="select-input" id="ob-goal" style="margin-bottom:14px;">
+        ${GOAL_OPTIONS.map(g=>`<option value="${g.delta}" ${p.goalDelta===g.delta?'selected':''}>${g.label}</option>`).join("")}
+      </select>
+
+      <label style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:4px;">Training Experience Level</label>
+      <div style="display:flex;gap:6px;margin-bottom:14px;">
+        ${Object.entries(LEVELS).map(([key,lv])=>`<button class="cat-chip ${state.activeLevel===key?'active':''}" data-ob-level="${key}" style="flex:1;text-align:center;">${lv.label}</button>`).join("")}
+      </div>
+
+      <label style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:4px;">Hyrox Experience</label>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;">
+        ${HYROX_EXPERIENCE_OPTIONS.map(o=>`<button class="cat-chip ${p.hyroxExperience===o.key?'active':''}" data-ob-hyrox="${o.key}" style="text-align:left;padding:11px 14px;">${o.label}</button>`).join("")}
+      </div>
+
+      <label style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:4px;">Training Days Per Week</label>
+      <select class="select-input" id="ob-days" style="margin-bottom:14px;">
+        ${[2,3,4,5,6,7].map(n=>`<option value="${n}" ${p.trainingDays===n?'selected':''}>${n} days/week</option>`).join("")}
+      </select>
+
+      <label style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:4px;">Available Equipment</label>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px;">
+        ${EQUIPMENT_OPTIONS.map(eq=>`<button class="cat-chip ${p.equipment.includes(eq)?'active':''}" data-ob-equipment="${eq}">${eq}</button>`).join("")}
+      </div>
+
+      <button class="btn btn-accent btn-block" data-action="onboarding-complete" style="margin-bottom:10px;">Get Started</button>
+      <button class="btn btn-ghost btn-block" data-action="onboarding-skip">Skip for now</button>
+    </div>
+  `;
+  document.getElementById("ob-name").addEventListener("change", e=> p.name = e.target.value);
+  document.getElementById("ob-age").addEventListener("change", e=> p.age = Number(e.target.value)||p.age);
+  document.getElementById("ob-height").addEventListener("change", e=> p.height = Number(e.target.value)||p.height);
+  document.getElementById("ob-weight").addEventListener("change", e=> p.weight = Number(e.target.value)||p.weight);
+  document.getElementById("ob-goal").addEventListener("change", e=> p.goalDelta = Number(e.target.value));
+  document.getElementById("ob-days").addEventListener("change", e=> p.trainingDays = Number(e.target.value));
+  document.querySelectorAll("[data-ob-gender]").forEach(el=> el.addEventListener("click", ()=>{ p.gender = el.dataset.obGender; renderOnboarding(); }));
+  document.querySelectorAll("[data-ob-level]").forEach(el=> el.addEventListener("click", ()=>{ state.activeLevel = el.dataset.obLevel; renderOnboarding(); }));
+  document.querySelectorAll("[data-ob-hyrox]").forEach(el=> el.addEventListener("click", ()=>{ p.hyroxExperience = el.dataset.obHyrox; renderOnboarding(); }));
+  document.querySelectorAll("[data-ob-equipment]").forEach(el=> el.addEventListener("click", ()=>{
+    const eq = el.dataset.obEquipment;
+    if(p.equipment.includes(eq)) p.equipment = p.equipment.filter(e=>e!==eq);
+    else p.equipment = p.equipment.concat([eq]);
+    renderOnboarding();
+  }));
+  document.querySelector('[data-action="onboarding-complete"]').addEventListener("click", ()=>{
+    state.onboardingComplete = true;
+    rebuildWeeks();
+    render();
+  });
+  document.querySelector('[data-action="onboarding-skip"]').addEventListener("click", ()=>{
+    state.onboardingComplete = true; // don't ask again — defaults remain, editable anytime in Body tab / Settings
+    render();
+  });
 }
 
 function renderSettingsTab(){
@@ -2611,8 +2948,10 @@ function attachHandlers(){
   });
 
   // Body tab — profile (single source of truth)
+  const pn = document.getElementById("p-name");
   const ph = document.getElementById("p-height");
   const pa = document.getElementById("p-age");
+  if(pn) pn.addEventListener("change", ()=>{ state.profile.name = pn.value; render(); });
   if(ph) ph.addEventListener("change", ()=>{ state.profile.height = Number(ph.value)||state.profile.height; render(); });
   if(pa) pa.addEventListener("change", ()=>{ state.profile.age = Number(pa.value)||state.profile.age; render(); });
   document.querySelectorAll("[data-profile-gender]").forEach(el=>{
@@ -2622,6 +2961,18 @@ function attachHandlers(){
   if(pact) pact.addEventListener("change", ()=>{ state.profile.activityMultiplier = Number(pact.value); render(); });
   const pgoal = document.getElementById("p-goal");
   if(pgoal) pgoal.addEventListener("change", ()=>{ state.profile.goalDelta = Number(pgoal.value); render(); });
+  const phyroxExp = document.getElementById("p-hyrox-exp");
+  if(phyroxExp) phyroxExp.addEventListener("change", ()=>{ state.profile.hyroxExperience = phyroxExp.value; render(); });
+  const ptDays = document.getElementById("p-training-days");
+  if(ptDays) ptDays.addEventListener("change", ()=>{ state.profile.trainingDays = Number(ptDays.value); render(); });
+  document.querySelectorAll("[data-profile-equipment]").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      const eq = el.dataset.profileEquipment;
+      if(state.profile.equipment.includes(eq)) state.profile.equipment = state.profile.equipment.filter(e=>e!==eq);
+      else state.profile.equipment = state.profile.equipment.concat([eq]);
+      render();
+    });
+  });
 
   const logBodyBtn = document.querySelector('[data-action="log-body"]');
   if(logBodyBtn) logBodyBtn.addEventListener("click", ()=>{
@@ -2731,6 +3082,11 @@ function attachHandlers(){
   document.querySelectorAll("[data-metric]").forEach(el=>{
     el.addEventListener("click", ()=>{ state.chartMetric = el.dataset.metric; render(); });
   });
+  const progExSelect = document.getElementById("progress-exercise-select");
+  if(progExSelect) progExSelect.addEventListener("change", ()=>{
+    state.progressExercise = progExSelect.value;
+    render();
+  });
   document.querySelectorAll("[data-cal-nav]").forEach(el=>{
     el.addEventListener("click", ()=>{
       const delta = Number(el.dataset.calNav);
@@ -2796,6 +3152,7 @@ function attachHandlers(){
    BOOTSTRAP
 ========================================================= */
 runMigrations();
+resolveOnboardingStatus();
 rebuildWeeks();
 
 // Global safety net: catches errors thrown outside render() (e.g. inside an
