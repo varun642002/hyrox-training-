@@ -181,6 +181,13 @@
 
   /* Workout set-table card */
   .ex-log-card{background:var(--surface); border-radius:14px; padding:14px; margin-bottom:14px;}
+  .ex-menu-backdrop{position:fixed; inset:0; z-index:70; background:transparent;}
+  .ex-menu{position:absolute; top:32px; right:0; z-index:71; background:var(--surface-alt); border:1px solid var(--border);
+    border-radius:12px; padding:6px; min-width:200px; box-shadow:0 8px 24px rgba(0,0,0,.4);}
+  .ex-menu-item{display:flex; align-items:center; gap:10px; width:100%; background:none; border:none; color:var(--text);
+    font-size:13px; font-weight:600; padding:10px 12px; border-radius:8px; cursor:pointer; text-align:left;}
+  .ex-menu-item:active{background:var(--surface);}
+  .ex-menu-item[disabled]{opacity:.35; pointer-events:none;}
   .notes-inline{width:100%; background:transparent; border:none; border-bottom:1px solid var(--border); color:var(--muted);
     font-size:13px; padding:8px 0; margin:8px 0;}
   .notes-inline:focus{color:var(--text); border-color:var(--steel);}
