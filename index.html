@@ -16,7 +16,23 @@
     --accent:#FF5A1F; --steel:#4FA8D8; --text:#F2F1ED; --muted:#8B8B94; --mint:#3ECF8E;
     --border:#33333d;
   }
+  [data-theme="light"]{
+    --bg:#F5F5F7; --surface:#FFFFFF; --surface-alt:#ECECF1;
+    --accent:#E24E15; --steel:#1F6E9C; --text:#16161A; --muted:#6B6B76; --mint:#188F5D;
+    --border:#DEDEE4;
+  }
+  [data-theme="light"] .timer-ring{ color:#16161A; }
+  [data-theme="light"] .week-chip.active{ color:#fff; }
+  [data-theme="light"] .level-chip.active{ color:var(--accent); }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, [tabindex]:focus-visible{
+    outline:2px solid var(--steel); outline-offset:2px; border-radius:4px;
+  }
+  .del{color:#5c5c66; font-weight:700; font-size:12px; padding:9px; background:none; border:none; cursor:pointer;
+    min-width:32px; min-height:32px; display:inline-flex; align-items:center; justify-content:center;}
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.001s !important; animation-iteration-count:1 !important; transition-duration:0.001s !important;}
+  }
   html,body{margin:0; padding:0; background:var(--bg); color:var(--text);
     font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
     height:100%; overscroll-behavior:none;}
