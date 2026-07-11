@@ -148,6 +148,153 @@ const FINE_TO_BROAD = {
 };
 
 
+/* =========================================================
+   EXERCISE DETAILS — rich reference data (muscles, form, media) for the
+   exercise detail screen. Deliberately kept SEPARATE from LIBRARY: this is
+   reference/media metadata, not workout-logging data, so it can be extended
+   or left empty per-exercise without touching the plan, logger, or PRs.
+
+   PROOF OF CONCEPT — populated for 3 exercises only, as requested:
+   Barbell Back Squat, Barbell Bench Press, Conventional Deadlift.
+
+   IMPORTANT — animation_available is false for all of these. There is no
+   real hosted video/CDN for this app; animation_webm_url / animation_mp4_url
+   are left null rather than filled with placeholder links, because a fake
+   URL would either 404 or silently show unrelated stock footage mislabeled
+   as this exercise. The player component below is fully built and will
+   activate automatically the moment real URLs are supplied here.
+========================================================= */
+const EXERCISE_DETAILS = {
+  "Barbell Back Squat": {
+    primaryMuscle: "Quadriceps",
+    secondaryMuscles: ["Glutes","Hamstrings","Lower Back","Core"],
+    equipment: "Barbell",
+    difficulty: "Intermediate",
+    movementPattern: "Squat",
+    instructions: [
+      "Set the bar in a rack at roughly chest height and step under it, resting it across your upper traps.",
+      "Unrack the bar, step back, and set feet shoulder-width apart with toes slightly turned out.",
+      "Brace your core, break at the hips and knees together, and descend until thighs are at least parallel to the floor.",
+      "Drive through the whole foot to stand back up, keeping the chest up and the bar path vertical."
+    ],
+    formTips: [
+      "Keep the bar over your mid-foot throughout the movement, not drifting forward.",
+      "Take a full breath and brace your core before each rep.",
+      "Track your knees in line with your toes as you descend."
+    ],
+    commonMistakes: [
+      "Letting the knees cave inward on the way up.",
+      "Rounding the lower back at the bottom of the squat.",
+      "Rising onto the toes instead of driving through the whole foot."
+    ],
+    animationWebmUrl: null,
+    animationMp4Url: null,
+    thumbnailUrl: null,
+    animationAvailable: false
+  },
+  "Barbell Bench Press": {
+    primaryMuscle: "Chest",
+    secondaryMuscles: ["Triceps","Anterior Deltoids"],
+    equipment: "Barbell",
+    difficulty: "Intermediate",
+    movementPattern: "Horizontal Push",
+    instructions: [
+      "Lie on the bench with eyes roughly under the bar, feet flat on the floor.",
+      "Grip the bar slightly wider than shoulder-width and unrack it over your chest.",
+      "Lower the bar under control to the mid-chest, keeping elbows at roughly a 45° angle to your torso.",
+      "Press the bar back up to full lockout in a slight arc back toward the rack position."
+    ],
+    formTips: [
+      "Keep your shoulder blades pulled back and down against the bench throughout.",
+      "Keep a slight, natural arch in your lower back — don't flatten it completely.",
+      "Drive your feet into the floor for stability, not to bounce the bar."
+    ],
+    commonMistakes: [
+      "Flaring the elbows out to 90°, which stresses the shoulders.",
+      "Bouncing the bar off the chest instead of a controlled touch.",
+      "Losing shoulder blade retraction partway through the set."
+    ],
+    animationWebmUrl: null,
+    animationMp4Url: null,
+    thumbnailUrl: null,
+    animationAvailable: false
+  },
+  "Conventional Deadlift": {
+    primaryMuscle: "Glutes",
+    secondaryMuscles: ["Hamstrings","Lower Back","Lats","Forearms"],
+    equipment: "Barbell",
+    difficulty: "Intermediate",
+    movementPattern: "Hip Hinge",
+    instructions: [
+      "Stand with feet hip-width apart, bar over mid-foot, shins close to the bar.",
+      "Hinge at the hips and bend the knees to grip the bar just outside your legs.",
+      "Brace your core, flatten your back, and pull the slack out of the bar before lifting.",
+      "Drive through the floor, extending hips and knees together until standing tall.",
+      "Reverse the motion under control to return the bar to the floor."
+    ],
+    formTips: [
+      "Keep the bar in contact with your legs throughout the entire pull.",
+      "Push the floor away with your legs rather than yanking with your back.",
+      "Finish with hips fully extended — don't lean back past neutral."
+    ],
+    commonMistakes: [
+      "Letting the bar drift away from the shins, turning it into a squat-pull hybrid.",
+      "Rounding the lower back to reach the bar.",
+      "Hyperextending the lower back at lockout."
+    ],
+    animationWebmUrl: null,
+    animationMp4Url: null,
+    thumbnailUrl: null,
+    animationAvailable: false
+  }
+};
+
+// Deterministic avatar colors per muscle bucket — used since no real exercise photos exist
+const MUSCLE_AVATAR_COLOR = {
+  Chest:"#FF5A1F", Lats:"#4FA8D8", Traps:"#4FA8D8", Shoulders:"#F2A93B",
+  Biceps:"#3ECF8E", Triceps:"#3ECF8E", Forearms:"#3ECF8E",
+  Quadriceps:"#E85D75", Hamstrings:"#E85D75", Glutes:"#E85D75", Calves:"#E85D75", Abductors:"#E85D75", Adductors:"#E85D75",
+  Abdominals:"#9B7EDE", Cardio:"#4FA8D8", Mobility:"#8B8B94"
+};
+function avatarColorFor(muscle){ return MUSCLE_AVATAR_COLOR[muscle] || "#8B8B94"; }
+
+function recentExerciseNames(limit=8){
+  const seen = new Set();
+  const out = [];
+  for(const s of state.workoutLog){
+    for(const ex of s.exercises){
+      if(!seen.has(ex.name)){ seen.add(ex.name); out.push(ex.name); }
+      if(out.length>=limit) return out;
+    }
+  }
+  return out;
+}
+
+/* Colour + broad-group bucket used for the exercise picker's thumbnail badges.
+   No real illustrations exist for 478 exercises, so each gets a tinted icon
+   matching its muscle group rather than a placeholder that pretends to be a photo. */
+const MUSCLE_GROUP_COLOR = {
+  Back:"var(--steel)", Chest:"var(--accent)", Legs:"#B08BF4", Core:"var(--mint)",
+  Arms:"#FFB020", Shoulders:"#4FD8C4", Cardio:"var(--accent)", Mobility:"var(--muted)"
+};
+function muscleGroupColor(muscle){
+  return MUSCLE_GROUP_COLOR[FINE_TO_BROAD[muscle]] || (muscle==="Cardio" ? MUSCLE_GROUP_COLOR.Cardio : muscle==="Mobility" ? MUSCLE_GROUP_COLOR.Mobility : "var(--muted)");
+}
+
+/* Most-recently-logged exercise names, newest first, deduped. Used to open the
+   exercise picker on "Recent" by default the way most workout-logging apps do. */
+function recentExerciseNames(limit=10){
+  const seen = new Set();
+  const out = [];
+  for(const session of state.workoutLog){
+    for(const ex of session.exercises){
+      if(!seen.has(ex.name)){ seen.add(ex.name); out.push(ex.name); }
+      if(out.length>=limit) return out;
+    }
+  }
+  return out;
+}
+
 function allLibraryExercises(){
   const custom = LS.get("hx_custom_exercises", []);
   const list = [];
@@ -197,7 +344,8 @@ const ICONS = {
   home:'<path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>',
   more:'<circle cx="5" cy="12" r="1.8" fill="currentColor"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/><circle cx="19" cy="12" r="1.8" fill="currentColor"/>',
   chevronUp:'<path d="M6 15l6-6 6 6" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
-  chevronDown:'<path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'
+  chevronDown:'<path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
+  trend:'<path d="M4 15l5-5 4 4 7-8" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 6h5v5" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'
 };
 function svg(name, size=19){ return `<svg width="${size}" height="${size}" viewBox="0 0 24 24">${ICONS[name]}</svg>`; }
 
@@ -251,6 +399,16 @@ const state = {
   calendarMonthOffset: 0,
   bodyDistWeekOffset: 0,
   progressExercise: null,
+  viewingExerciseDetail: null,
+  exercisePickerOpen: false,
+  exercisePickerSearch: "",
+  exercisePickerEquip: "All",
+  exercisePickerMuscle: "All",
+  showExercisePicker: false,
+  exercisePickerSearch: "",
+  exercisePickerEquipment: "All",
+  exercisePickerMuscle: "All",
+  exercisePickerShowCreate: false,
   timer: null
 };
 
@@ -405,22 +563,22 @@ function renderErrorScreen(err){
 
 function renderMoreSheet(){
   const items = [
-    {id:"library", label:"Library", desc:"Browse exercises & equipment"},
-    {id:"body", label:"Body", desc:"Weight, measurements, calculators"},
-    {id:"nutrition", label:"Fuel", desc:"Meals, calories, macros"},
-    {id:"settings", label:"Settings", desc:"Rest timer, backups, preferences"}
+    {id:"library", label:"Library", desc:"Exercises & equipment", color:"var(--steel)", icon:"library"},
+    {id:"body", label:"Body", desc:"Weight & measurements", color:"var(--accent)", icon:"body"},
+    {id:"nutrition", label:"Fuel", desc:"Meals, calories, macros", color:"var(--mint)", icon:"nutrition"},
+    {id:"settings", label:"Settings", desc:"Backups & preferences", color:"var(--muted)", icon:"gear"}
   ];
   return `<div class="more-sheet-backdrop" data-close-more>
-    <div class="more-sheet" onclick="event.stopPropagation()">
+    <div class="more-sheet">
       <div class="more-sheet-handle"></div>
-      <div class="eyebrow-label" style="margin-top:0;">More</div>
-      ${items.map(it=>`<button class="more-sheet-item" data-nav="${it.id}">
-        <span class="more-sheet-icon">${svg(it.id,20)}</span>
-        <span style="flex:1;text-align:left;">
-          <div style="font-weight:800;font-size:15px;">${it.label}</div>
-          <div style="font-size:12px;color:var(--muted);">${it.desc}</div>
-        </span>
-      </button>`).join("")}
+      <div class="eyebrow-label" style="margin-top:0;margin-bottom:14px;">More</div>
+      <div class="more-sheet-grid">
+        ${items.map(it=>`<button class="more-sheet-card" data-nav="${it.id}">
+          <span class="more-sheet-icon-badge" style="background:${it.color}22;color:${it.color};">${svg(it.icon,22)}</span>
+          <div style="font-weight:800;font-size:15px;margin-top:10px;">${it.label}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">${it.desc}</div>
+        </button>`).join("")}
+      </div>
     </div>
   </div>`;
 }
@@ -686,6 +844,80 @@ function prValueLabel(pr){
 }
 
 /* =========================================================
+   EXERCISE PICKER — full-screen searchable "Add Exercise" flow
+========================================================= */
+function exercisePickerRow(ex){
+  const initial = ex.name.trim().charAt(0).toUpperCase();
+  const color = avatarColorFor(ex.muscle);
+  const equipSuffix = ex.cat && !["Custom"].includes(ex.cat) ? ` (${ex.cat})` : "";
+  return `<div class="ex-picker-row" data-pick-exercise="${ex.name}">
+    <div class="ex-picker-avatar" style="background:${color}22;color:${color};">${initial}</div>
+    <div style="flex:1;min-width:0;">
+      <div style="font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ex.name}${equipSuffix}</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:1px;">${ex.muscle}</div>
+    </div>
+    <button class="ex-picker-info" data-view-exercise-from-picker="${ex.name}" title="View exercise guide">${svg('progress',16)}</button>
+  </div>`;
+}
+
+function renderExercisePicker(){
+  if(state.exercisePickerShowCreate){
+    return `
+      <div class="row-between" style="margin-bottom:14px;">
+        <button class="ex-picker-textbtn" data-action="close-exercise-picker">Cancel</button>
+        <span style="font-weight:800;font-size:16px;">New Exercise</span>
+        <button class="ex-picker-textbtn" data-action="save-custom-from-picker" style="color:var(--accent);">Create</button>
+      </div>
+      ${customExerciseForm(true)}
+    `;
+  }
+
+  const search = state.exercisePickerSearch.trim().toLowerCase();
+  const equip = state.exercisePickerEquipment;
+  const muscleFilter = state.exercisePickerMuscle;
+  let items = allLibraryExercises();
+  if(equip!=="All") items = items.filter(i=>i.cat===equip);
+  if(muscleFilter!=="All") items = items.filter(i=>i.muscle===muscleFilter);
+  if(search) items = items.filter(i=>i.name.toLowerCase().includes(search));
+
+  const isFiltering = !!search || equip!=="All" || muscleFilter!=="All";
+  const recentNames = isFiltering ? [] : recentExerciseNames(8);
+  const recentItems = recentNames.map(n=> items.find(i=>i.name===n)).filter(Boolean);
+
+  const equipOptions = ["All", ...Object.keys(LIBRARY)];
+  const muscleOptions = ["All", ...BODY_MUSCLES, "Cardio", "Mobility"];
+
+  return `
+    <div class="row-between" style="margin-bottom:14px;">
+      <button class="ex-picker-textbtn" data-action="close-exercise-picker">Cancel</button>
+      <span style="font-weight:800;font-size:16px;">Add Exercise</span>
+      <button class="ex-picker-textbtn" data-action="show-create-in-picker" style="color:var(--accent);">Create</button>
+    </div>
+
+    <div class="search-bar" style="margin-bottom:10px;">
+      <input type="text" id="ex-picker-search" placeholder="Search exercise" value="${state.exercisePickerSearch}">
+    </div>
+
+    <div class="grid2" style="margin-bottom:14px;">
+      <select class="select-input" id="ex-picker-equip" style="margin:0;">
+        ${equipOptions.map(o=>`<option value="${o}" ${equip===o?'selected':''}>${o==="All"?"All Equipment":o}</option>`).join("")}
+      </select>
+      <select class="select-input" id="ex-picker-muscle" style="margin:0;">
+        ${muscleOptions.map(o=>`<option value="${o}" ${muscleFilter===o?'selected':''}>${o==="All"?"All Muscles":o}</option>`).join("")}
+      </select>
+    </div>
+
+    ${!isFiltering && recentItems.length ? `
+      <div class="eyebrow-label" style="margin-top:4px;">Recent Exercises</div>
+      ${recentItems.map(exercisePickerRow).join("")}
+      <div class="eyebrow-label">All Exercises</div>
+    ` : ""}
+
+    ${items.length===0 ? `<div class="empty-note">No exercises match.</div>` : items.map(exercisePickerRow).join("")}
+  `;
+}
+
+/* =========================================================
    WORKOUT TAB — freestyle logger, set-table style
 ========================================================= */
 const REST_OPTIONS = [0,60,90,120,180];
@@ -825,6 +1057,7 @@ function renderPRCelebration(){
 }
 
 function renderWorkoutTab(){
+  if(state.session && state.showExercisePicker) return renderExercisePicker();
   if(!state.session){
     if(state.viewingSessionId){
       const s = state.workoutLog.find(x=>x.id===state.viewingSessionId);
@@ -893,14 +1126,7 @@ function renderWorkoutTab(){
       style="width:100%;background:var(--surface-alt);border-radius:8px;padding:9px 10px;font-size:12px;color:var(--text);margin:6px 0 14px;resize:vertical;min-height:36px;border:none;font-family:inherit;">${s.notes||''}</textarea>
 
     <div class="eyebrow-label">Add Exercise</div>
-    <select class="select-input" id="ex-picker">
-      <option value="">Choose an exercise…</option>
-      ${Object.entries(LIBRARY).map(([cat,items])=>`<optgroup label="${cat}">
-        ${items.map(([n])=>`<option value="${n}">${n}</option>`).join("")}
-      </optgroup>`).join("")}
-      ${state.customExercises.length? `<optgroup label="Custom">${state.customExercises.map(c=>`<option value="${c.name}">${c.name}</option>`).join("")}</optgroup>`:""}
-    </select>
-    <button class="btn btn-ghost btn-block" data-action="add-exercise" style="margin-bottom:16px;">Add to Session</button>
+    <button class="btn btn-ghost btn-block" data-action="open-exercise-picker" style="margin-bottom:16px;display:flex;align-items:center;justify-content:center;gap:8px;">${svg('plus',16)} Add Exercise</button>
 
     ${s.exercises.length===0?`<div class="empty-note">No exercises added yet.</div>`:
       s.exercises.map((ex,exi)=>{
@@ -1063,7 +1289,81 @@ document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState=
 /* =========================================================
    LIBRARY TAB
 ========================================================= */
+/* =========================================================
+   EXERCISE DETAIL SCREEN — muscles, form, and a lazy-loaded looping
+   demonstration video with graceful fallback when none exists.
+========================================================= */
+function renderExerciseAnimation(detail){
+  if(!detail || !detail.animationAvailable || (!detail.animationWebmUrl && !detail.animationMp4Url)){
+    return `<div class="ex-anim-fallback">
+      ${detail && detail.thumbnailUrl ? `<img src="${detail.thumbnailUrl}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:14px;">` : svg('workout',28)}
+      <div style="font-size:12px;color:var(--muted);margin-top:8px;">No demonstration video yet</div>
+    </div>`;
+  }
+  // Lazy: only the <video> tag with preload="none" is emitted; nothing downloads until
+  // the browser actually needs it (and only once this detail screen is on-DOM at all).
+  return `<div class="ex-anim-wrap">
+    <video id="ex-anim-video" class="ex-anim-video" loop muted playsinline preload="none"
+      ${detail.thumbnailUrl?`poster="${detail.thumbnailUrl}"`:''}>
+      ${detail.animationWebmUrl?`<source src="${detail.animationWebmUrl}" type="video/webm">`:''}
+      ${detail.animationMp4Url?`<source src="${detail.animationMp4Url}" type="video/mp4">`:''}
+    </video>
+  </div>`;
+}
+
+function renderExerciseDetail(name){
+  const detail = EXERCISE_DETAILS[name];
+  const all = allLibraryExercises();
+  const libEntry = all.find(e=>e.name===name);
+  const muscle = detail ? detail.primaryMuscle : (libEntry ? libEntry.muscle : getMuscle(name));
+
+  return `
+    <div class="row-between" style="margin-bottom:4px;">
+      <button class="btn btn-ghost" data-action="close-exercise-detail" style="padding:6px 12px;font-size:12px;">← Back</button>
+    </div>
+    <div style="font-size:20px;font-weight:900;margin:10px 0 6px;">${name}</div>
+    <span class="muscle-chip active">${muscle}</span>
+
+    ${renderExerciseAnimation(detail)}
+
+    ${detail ? `
+      <div class="grid2" style="margin-top:16px;margin-bottom:8px;">
+        <div class="stat-card"><div class="stat-label">Equipment</div><div class="stat-value" style="font-size:15px;">${detail.equipment}</div></div>
+        <div class="stat-card"><div class="stat-label">Difficulty</div><div class="stat-value" style="font-size:15px;">${detail.difficulty}</div></div>
+        <div class="stat-card"><div class="stat-label">Movement Pattern</div><div class="stat-value" style="font-size:15px;">${detail.movementPattern}</div></div>
+        <div class="stat-card"><div class="stat-label">Secondary Muscles</div><div class="stat-value" style="font-size:12px;line-height:1.4;">${detail.secondaryMuscles.join(", ")}</div></div>
+      </div>
+
+      <div class="eyebrow-label">Step-by-Step</div>
+      <div class="info-box" style="padding:14px;">
+        ${detail.instructions.map((s,i)=>`<div style="display:flex;gap:10px;padding:6px 0;${i>0?'border-top:1px solid var(--border);':''}">
+          <span class="mono" style="color:var(--accent);font-weight:900;font-size:13px;flex-shrink:0;">${i+1}</span>
+          <span style="font-size:13px;line-height:1.5;">${s}</span>
+        </div>`).join("")}
+      </div>
+
+      <div class="eyebrow-label">Form Tips</div>
+      <div class="info-box" style="padding:14px;">
+        ${detail.formTips.map(t=>`<div style="display:flex;gap:8px;padding:4px 0;font-size:13px;"><span style="color:var(--mint);">✓</span> ${t}</div>`).join("")}
+      </div>
+
+      <div class="eyebrow-label">Common Mistakes</div>
+      <div class="info-box" style="padding:14px;margin-bottom:16px;">
+        ${detail.commonMistakes.map(t=>`<div style="display:flex;gap:8px;padding:4px 0;font-size:13px;"><span style="color:var(--accent);">✕</span> ${t}</div>`).join("")}
+      </div>
+    ` : `
+      <div class="info-box" style="padding:14px;margin:16px 0;">
+        <div style="font-size:13px;color:var(--muted);">Detailed form notes aren't available for this exercise yet.${libEntry?` Suggested: <span style="color:var(--text);font-weight:700;">${libEntry.presc}</span>`:''}</div>
+      </div>
+    `}
+
+    <button class="btn btn-accent btn-block" data-action="add-detail-to-workout" data-exercise-name="${name}">${svg('plus',16)} Add to Workout</button>
+  `;
+}
+
 function renderLibraryTab(){
+  if(state.viewingExerciseDetail) return renderExerciseDetail(state.viewingExerciseDetail);
+
   const cats = ["All", ...Object.keys(LIBRARY), ...(state.customExercises.length?["Custom"]:[])];
   let items = allLibraryExercises();
   if(state.libCategory!=="All") items = items.filter(i=> i.cat===state.libCategory || (state.libCategory==="Custom" && i.custom));
@@ -1078,15 +1378,15 @@ function renderLibraryTab(){
     </div>
     <button class="btn btn-accent btn-block" data-action="show-add-custom" style="margin-bottom:16px;">${svg('plus',16)} Add Custom Exercise</button>
     <div id="custom-form-slot">${state.showCustomForm ? customExerciseForm() : ""}</div>
-    ${items.map(ex=>`<div class="lib-item">
-      <div><div class="lib-item-name">${ex.name}${ex.custom?' <span style="color:var(--accent);font-size:10px;">CUSTOM</span>':''}</div>
+    ${items.map(ex=>`<div class="lib-item" data-view-exercise="${ex.name}" style="cursor:pointer;">
+      <div><div class="lib-item-name">${ex.name}${ex.custom?' <span style="color:var(--accent);font-size:10px;">CUSTOM</span>':''}${EXERCISE_DETAILS[ex.name]?' <span style="color:var(--mint);font-size:10px;">GUIDE</span>':''}</div>
       <div class="lib-item-cat">${ex.cat} · ${ex.presc}</div></div>
     </div>`).join("")}
     ${items.length===0?`<div class="empty-note">No exercises match.</div>`:""}
   `;
 }
 
-function customExerciseForm(){
+function customExerciseForm(hideButton){
   return `<div class="info-box" style="margin-bottom:16px;">
     <input type="text" id="custom-name" placeholder="Exercise name" style="background:var(--surface-alt);border-radius:8px;padding:10px;width:100%;margin-bottom:8px;font-size:14px;color:var(--text);">
     <select class="select-input" id="custom-cat">
@@ -1096,7 +1396,7 @@ function customExerciseForm(){
       ${[...BODY_MUSCLES,"Mobility","Other"].map(m=>`<option value="${m}">${m}</option>`).join("")}
     </select>
     <input type="text" id="custom-presc" placeholder="Default prescription (e.g. 3x12)" style="background:var(--surface-alt);border-radius:8px;padding:10px;width:100%;margin-bottom:8px;font-size:14px;color:var(--text);">
-    <button class="btn btn-accent btn-block" data-action="save-custom">Save Exercise</button>
+    ${hideButton?'':'<button class="btn btn-accent btn-block" data-action="save-custom">Save Exercise</button>'}
   </div>`;
 }
 
@@ -2534,7 +2834,11 @@ function attachHandlers(){
     el.addEventListener("click", ()=>{ state.tab = el.dataset.nav; render(); });
   });
   document.querySelectorAll("[data-close-more]").forEach(el=>{
-    el.addEventListener("click", ()=>{ state.tab = "home"; render(); });
+    el.addEventListener("click", (e)=>{
+      if(e.target !== el) return; // ignore bubbled clicks from the sheet/cards inside
+      state.tab = "home";
+      render();
+    });
   });
   document.querySelectorAll("[data-home-day]").forEach(el=>{
     el.addEventListener("click", ()=>{
@@ -2930,6 +3234,45 @@ function attachHandlers(){
   document.querySelectorAll("[data-cat]").forEach(el=>{
     el.addEventListener("click", ()=>{ state.libCategory = el.dataset.cat; render(); });
   });
+  document.querySelectorAll("[data-view-exercise]").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      state.viewingExerciseDetail = el.dataset.viewExercise;
+      render();
+    });
+  });
+  const closeExDetailBtn = document.querySelector('[data-action="close-exercise-detail"]');
+  if(closeExDetailBtn) closeExDetailBtn.addEventListener("click", ()=>{
+    state.viewingExerciseDetail = null;
+    render();
+  });
+  const addDetailBtn = document.querySelector('[data-action="add-detail-to-workout"]');
+  if(addDetailBtn) addDetailBtn.addEventListener("click", ()=>{
+    const name = addDetailBtn.dataset.exerciseName;
+    if(!state.session){
+      state.session = { startedAt: Date.now(), exercises: [], notes:"" };
+      state.editingSessionId = null;
+      applyWakeLock();
+    }
+    state.session.exercises.push({ name, notes:"", restDuration:state.settings.defaultRest,
+      sets: [{ weight:"", reps:"", rpe:"", done:false, type:"working" }] });
+    state.viewingExerciseDetail = null;
+    state.tab = "workout";
+    render();
+  });
+  // Lazy video: only starts loading/playing once the detail screen with a real
+  // animation is actually on-DOM, and pauses/releases if the tab is left.
+  const exVideo = document.getElementById("ex-anim-video");
+  if(exVideo){
+    exVideo.play().catch(()=>{}); // preload="none" means this triggers the actual fetch, not before
+    if(!window.__exAnimVisibilityHandlerAttached){
+      window.__exAnimVisibilityHandlerAttached = true;
+      document.addEventListener("visibilitychange", ()=>{
+        const v = document.getElementById("ex-anim-video");
+        if(!v) return;
+        if(document.visibilityState==="hidden") v.pause(); else v.play().catch(()=>{});
+      });
+    }
+  }
   const showCustomBtn = document.querySelector('[data-action="show-add-custom"]');
   if(showCustomBtn) showCustomBtn.addEventListener("click", ()=>{
     state.showCustomForm = !state.showCustomForm;
@@ -2944,6 +3287,76 @@ function attachHandlers(){
     if(!name) return;
     state.customExercises.push({ name, cat, presc, unit:"reps", muscle });
     state.showCustomForm = false;
+    render();
+  });
+
+  // Exercise picker (full-screen Add Exercise flow)
+  const openPickerBtn = document.querySelector('[data-action="open-exercise-picker"]');
+  if(openPickerBtn) openPickerBtn.addEventListener("click", ()=>{
+    state.showExercisePicker = true;
+    state.exercisePickerSearch = "";
+    state.exercisePickerEquipment = "All";
+    state.exercisePickerMuscle = "All";
+    state.exercisePickerShowCreate = false;
+    render();
+  });
+  const closePickerBtn = document.querySelector('[data-action="close-exercise-picker"]');
+  if(closePickerBtn) closePickerBtn.addEventListener("click", ()=>{
+    if(state.exercisePickerShowCreate){ state.exercisePickerShowCreate = false; render(); return; }
+    state.showExercisePicker = false;
+    render();
+  });
+  const pickerSearchEl = document.getElementById("ex-picker-search");
+  if(pickerSearchEl) pickerSearchEl.addEventListener("input", ()=>{
+    state.exercisePickerSearch = pickerSearchEl.value;
+    render();
+  });
+  const pickerEquipEl = document.getElementById("ex-picker-equip");
+  if(pickerEquipEl) pickerEquipEl.addEventListener("change", ()=>{
+    state.exercisePickerEquipment = pickerEquipEl.value;
+    render();
+  });
+  const pickerMuscleEl = document.getElementById("ex-picker-muscle");
+  if(pickerMuscleEl) pickerMuscleEl.addEventListener("change", ()=>{
+    state.exercisePickerMuscle = pickerMuscleEl.value;
+    render();
+  });
+  document.querySelectorAll("[data-pick-exercise]").forEach(el=>{
+    el.addEventListener("click", (e)=>{
+      if(e.target.closest("[data-view-exercise-from-picker]")) return; // let the info button handle its own click
+      const name = el.dataset.pickExercise;
+      state.session.exercises.push({ name, notes:"", restDuration:state.settings.defaultRest,
+        sets: [{ weight:"", reps:"", rpe:"", done:false, type:"working" }] });
+      state.showExercisePicker = false;
+      render();
+    });
+  });
+  document.querySelectorAll("[data-view-exercise-from-picker]").forEach(el=>{
+    el.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      state.viewingExerciseDetail = el.dataset.viewExerciseFromPicker;
+      state.showExercisePicker = false;
+      state.tab = "library";
+      render();
+    });
+  });
+  const showCreateBtn = document.querySelector('[data-action="show-create-in-picker"]');
+  if(showCreateBtn) showCreateBtn.addEventListener("click", ()=>{
+    state.exercisePickerShowCreate = true;
+    render();
+  });
+  const saveCustomFromPickerBtn = document.querySelector('[data-action="save-custom-from-picker"]');
+  if(saveCustomFromPickerBtn) saveCustomFromPickerBtn.addEventListener("click", ()=>{
+    const name = document.getElementById("custom-name").value.trim();
+    const cat = document.getElementById("custom-cat").value;
+    const muscle = document.getElementById("custom-muscle").value;
+    const presc = document.getElementById("custom-presc").value.trim() || "—";
+    if(!name) return;
+    state.customExercises.push({ name, cat, presc, unit:"reps", muscle });
+    state.session.exercises.push({ name, notes:"", restDuration:state.settings.defaultRest,
+      sets: [{ weight:"", reps:"", rpe:"", done:false, type:"working" }] });
+    state.exercisePickerShowCreate = false;
+    state.showExercisePicker = false;
     render();
   });
 
